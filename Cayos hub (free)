@@ -18,6 +18,9 @@ if game.PlaceId == 11177482306 then
     _G.flying = false
     _G.infiniteAmmo = false
     _G.autoPickup = false
+    _G.spinning = false
+    _G.godmode = false
+    _G.onePunch = false
 
     -- Function: Fly
     local function startFly()
@@ -51,71 +54,49 @@ if game.PlaceId == 11177482306 then
         _G.flying = false
     end
 
-    -- Function: Make Player Invisible
-    local function makeInvisible()
-        local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                part.Transparency = 1
-                if part:FindFirstChild("face") then
-                    part.face.Transparency = 1
-                end
-            elseif part:IsA("Clothing") or part:IsA("Accessory") then
-                part:Destroy()
-            end
-        end
-    end
-
-    -- Function: Make Player Visible
-    local function makeVisible()
-        local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                part.Transparency = 0
-                if part:FindFirstChild("face") then
-                    part.face.Transparency = 0
-                end
-            end
-        end
-    end
-
-    -- Function: Infinite Ammo
-    local function enableInfiniteAmmo()
+    -- Function: Enable Godmode
+    local function enableGodmode()
+        if _G.godmode then return end
+        _G.godmode = true
         local player = game.Players.LocalPlayer
-        local backpack = player:WaitForChild("Backpack")
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:WaitForChild("Humanoid")
 
-        -- Check and update ammo properties
-        backpack.ChildAdded:Connect(function(tool)
-            if _G.infiniteAmmo and tool:FindFirstChild("Ammo") then
-                tool.Ammo:GetPropertyChangedSignal("Value"):Connect(function()
-                    tool.Ammo.Value = math.huge
-                end)
+        humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+            if _G.godmode and humanoid.Health < humanoid.MaxHealth then
+                humanoid.Health = humanoid.MaxHealth
             end
         end)
-
-        -- Update currently equipped tools
-        for _, tool in ipairs(backpack:GetChildren()) do
-            if tool:FindFirstChild("Ammo") then
-                tool.Ammo.Value = math.huge
-            end
-        end
     end
 
-    -- Function: Auto Pickup
-    local function enableAutoPickup()
-        while _G.autoPickup do
-            for _, item in ipairs(workspace:GetChildren()) do
-                if item:IsA("Tool") then
-                    local player = game.Players.LocalPlayer
-                    local character = player.Character or player.CharacterAdded:Wait()
-                    local humanoid = character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid:EquipTool(item)
-                    end
+    -- Function: Disable Godmode
+    local function disableGodmode()
+        _G.godmode = false
+    end
+
+    -- Function: One Punch
+    local function enableOnePunch()
+        if _G.onePunch then return end
+        _G.onePunch = true
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+        -- Detect collision with other players
+        humanoidRootPart.Touched:Connect(function(hit)
+            local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
+            if otherPlayer and otherPlayer ~= player then
+                local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
+                if otherHumanoid then
+                    otherHumanoid.Health = 0 -- Set the other player's health to 0
                 end
             end
-            task.wait(0.1) -- Small delay to avoid lag
-        end
+        end)
+    end
+
+    -- Function: Disable One Punch
+    local function disableOnePunch()
+        _G.onePunch = false
     end
 
     -- Players Tab
@@ -141,22 +122,6 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Invisible Player
-    playersTab:AddButton({
-        Name = "Make Player Invisible",
-        Callback = function()
-            makeInvisible()
-        end
-    })
-
-    -- Visible Player
-    playersTab:AddButton({
-        Name = "Make Player Visible",
-        Callback = function()
-            makeVisible()
-        end
-    })
-
     -- Fly Button
     playersTab:AddButton({
         Name = "Fly",
@@ -170,6 +135,19 @@ if game.PlaceId == 11177482306 then
         Name = "Unfly",
         Callback = function()
             stopFly()
+        end
+    })
+
+    -- One Punch Toggle
+    playersTab:AddToggle({
+        Name = "Enable One Punch",
+        Default = false,
+        Callback = function(state)
+            if state then
+                enableOnePunch()
+            else
+                disableOnePunch()
+            end
         end
     })
 
@@ -200,6 +178,26 @@ if game.PlaceId == 11177482306 then
             _G.autoPickup = state
             if state then
                 enableAutoPickup()
+            end
+        end
+    })
+
+    -- Useful Tab
+    local usefulTab = Window:MakeTab({
+        Name = "Useful",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Godmode Toggle
+    usefulTab:AddToggle({
+        Name = "Enable Godmode",
+        Default = false,
+        Callback = function(state)
+            if state then
+                enableGodmode()
+            else
+                disableGodmode()
             end
         end
     })
