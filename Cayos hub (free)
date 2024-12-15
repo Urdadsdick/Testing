@@ -22,7 +22,7 @@ local function debugMessage(msg)
     print("[DEBUG]: " .. msg)
 end
 
--- GodMode
+-- GodMode Function
 local function toggleGodMode()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
@@ -36,7 +36,25 @@ local function toggleGodMode()
     end
 end
 
--- Fly
+-- One Punch Mode Function
+local function enableOnePunch()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    humanoidRootPart.Touched:Connect(function(hit)
+        local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
+        if _G.onePunch and otherPlayer and otherPlayer ~= player then
+            local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
+            if otherHumanoid then
+                otherHumanoid.Health = 0
+                debugMessage("One Punch: Killed " .. otherPlayer.Name)
+            end
+        end
+    end)
+end
+
+-- Fly Function
 local function startFly()
     if _G.flying then return end
     _G.flying = true
@@ -68,25 +86,7 @@ local function stopFly()
     debugMessage("Flying Disabled")
 end
 
--- One Punch Mode
-local function enableOnePunch()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-    humanoidRootPart.Touched:Connect(function(hit)
-        local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
-        if _G.onePunch and otherPlayer and otherPlayer ~= player then
-            local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
-            if otherHumanoid then
-                otherHumanoid.Health = 0
-                debugMessage("One Punch: Killed " .. otherPlayer.Name)
-            end
-        end
-    end)
-end
-
--- Auto Pickup
+-- Auto Pickup Function
 local function startAutoPickup()
     _G.autoPickup = true
     while _G.autoPickup do
@@ -112,72 +112,7 @@ local function stopAutoPickup()
     debugMessage("Auto Pickup: Disabled")
 end
 
--- Main Window Setup
-local playerTab = Window:MakeTab({
-    Name = "Player",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
--- God Mode Toggle
-playerTab:AddToggle({
-    Name = "God Mode",
-    Default = false,
-    Callback = function(state)
-        _G.godMode = state
-        toggleGodMode()
-    end
-})
-
--- Fly Controls
-playerTab:AddButton({
-    Name = "Fly",
-    Callback = function()
-        startFly()
-    end
-})
-
-playerTab:AddButton({
-    Name = "Stop Fly",
-    Callback = function()
-        stopFly()
-    end
-})
-
--- One Punch Toggle
-playerTab:AddToggle({
-    Name = "One Punch Mode",
-    Default = false,
-    Callback = function(state)
-        _G.onePunch = state
-        if _G.onePunch then
-            enableOnePunch()
-        else
-            debugMessage("One Punch: Disabled")
-        end
-    end
-})
-
--- Auto Pickup Controls
-local usefulTab = Window:MakeTab({
-    Name = "Useful",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-usefulTab:AddToggle({
-    Name = "Auto Pickup",
-    Default = false,
-    Callback = function(state)
-        if state then
-            startAutoPickup()
-        else
-            stopAutoPickup()
-        end
-    end
-})
-
--- Teleport Tab (Example: Teleport to Casino)
+-- Teleport to Casino Example
 local teleportTab = Window:MakeTab({
     Name = "Teleports",
     Icon = "rbxassetid://4483345998",
@@ -194,7 +129,99 @@ teleportTab:AddButton({
     end
 })
 
--- Credits Tab (Including Discord link)
+-- Useful Tab (Now with God Mode and One Punch)
+local usefulTab = Window:MakeTab({
+    Name = "Useful",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+usefulTab:AddToggle({
+    Name = "God Mode",
+    Default = false,
+    Callback = function(state)
+        _G.godMode = state
+        toggleGodMode()
+    end
+})
+
+usefulTab:AddToggle({
+    Name = "One Punch Mode",
+    Default = false,
+    Callback = function(state)
+        _G.onePunch = state
+        if _G.onePunch then
+            enableOnePunch()
+        else
+            debugMessage("One Punch: Disabled")
+        end
+    end
+})
+
+usefulTab:AddButton({
+    Name = "Fly",
+    Callback = function()
+        startFly()
+    end
+})
+
+usefulTab:AddButton({
+    Name = "Stop Fly",
+    Callback = function()
+        stopFly()
+    end
+})
+
+-- Trolling Tab (Kill Player and Kill All)
+local trollingTab = Window:MakeTab({
+    Name = "Trolling",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Kill Player
+local playerList = {}  -- Table to hold players in the server
+for _, player in pairs(game.Players:GetPlayers()) do
+    table.insert(playerList, player.Name)
+end
+
+trollingTab:AddDropdown({
+    Name = "Kill Player",
+    Options = playerList,
+    Callback = function(playerName)
+        local playerToKill = game.Players:FindFirstChild(playerName)
+        if playerToKill and playerToKill.Character then
+            local humanoid = playerToKill.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.Health = 0
+                debugMessage("Killed " .. playerName)
+            end
+        end
+    end
+})
+
+-- Kill All Toggle
+trollingTab:AddToggle({
+    Name = "Kill All Players",
+    Default = false,
+    Callback = function(state)
+        if state then
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player.Character then
+                    local humanoid = player.Character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.Health = 0
+                        debugMessage("Killed " .. player.Name)
+                    end
+                end
+            end
+        else
+            debugMessage("Kill All: Disabled")
+        end
+    end
+})
+
+-- Credits Tab
 local creditsTab = Window:MakeTab({
     Name = "Credits",
     Icon = "rbxassetid://4483345998",
