@@ -21,6 +21,7 @@ if game.PlaceId == 11177482306 then
     _G.godMode = false
     _G.flying = false
     _G.speed = 50
+    _G.noclip = false
 
     -- Function: Fly
     local function startFly()
@@ -81,7 +82,8 @@ if game.PlaceId == 11177482306 then
             if _G.onePunch and otherPlayer and otherPlayer ~= player then
                 local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
                 if otherHumanoid then
-                    otherHumanoid.Health = 0
+                    -- Trigger damage instead of directly setting health to zero
+                    otherHumanoid:TakeDamage(otherHumanoid.Health)
                 end
             end
         end)
@@ -129,64 +131,6 @@ if game.PlaceId == 11177482306 then
         _G.autoPickup = false
     end
 
-    -- Teleports Tab
-    local teleportTab = Window:MakeTab({
-        Name = "Teleports",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- Function to Teleport
-    local function teleportTo(location)
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        if character then
-            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-            if humanoidRootPart then
-                humanoidRootPart.CFrame = location
-            end
-        end
-    end
-
-    -- Add Debugging for Accurate Locations
-    teleportTab:AddButton({
-        Name = "Get Current Coordinates",
-        Callback = function()
-            local player = game.Players.LocalPlayer
-            local pos = player.Character.HumanoidRootPart.Position
-            print("Your current position is: ", pos)
-        end
-    })
-
-    -- Teleport Buttons
-    teleportTab:AddButton({
-        Name = "Casino",
-        Callback = function()
-            teleportTo(CFrame.new(100, 50, -300)) -- Replace with accurate Casino coordinates
-        end
-    })
-
-    teleportTab:AddButton({
-        Name = "Spawn Point",
-        Callback = function()
-            teleportTo(CFrame.new(0, 10, 0)) -- Replace with Spawn coordinates
-        end
-    })
-
-    teleportTab:AddButton({
-        Name = "Weapon Store",
-        Callback = function()
-            teleportTo(CFrame.new(50, 10, 100)) -- Replace with Weapon Store coordinates
-        end
-    })
-
-    teleportTab:AddButton({
-        Name = "Safe Zone",
-        Callback = function()
-            teleportTo(CFrame.new(-200, 10, -150)) -- Replace with Safe Zone coordinates
-        end
-    })
-
     -- Player Tab
     local playerTab = Window:MakeTab({
         Name = "Player",
@@ -223,7 +167,54 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Miscellaneous Tab
+    -- Gun Tab
+    local gunTab = Window:MakeTab({
+        Name = "Guns",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    gunTab:AddToggle({
+        Name = "Enable Auto Gun Pickup",
+        Default = false,
+        Callback = function(state)
+            if state then
+                startAutoPickup()
+            else
+                stopAutoPickup()
+            end
+        end
+    })
+
+    -- Useful Tab
+    local usefulTab = Window:MakeTab({
+        Name = "Useful",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    usefulTab:AddToggle({
+        Name = "God Mode",
+        Default = false,
+        Callback = function(state)
+            if state then
+                enableGodMode()
+            else
+                disableGodMode()
+            end
+        end
+    })
+
+    usefulTab:AddToggle({
+        Name = "One Punch",
+        Default = false,
+        Callback = function(state)
+            _G.onePunch = state
+            enableOnePunch()
+        end
+    })
+
+    -- Misc Tab
     local miscTab = Window:MakeTab({
         Name = "Misc",
         Icon = "rbxassetid://4483345998",
@@ -238,18 +229,6 @@ if game.PlaceId == 11177482306 then
                 startAutoMopFarm()
             else
                 stopAutoMopFarm()
-            end
-        end
-    })
-
-    miscTab:AddToggle({
-        Name = "Enable God Mode",
-        Default = false,
-        Callback = function(state)
-            if state then
-                enableGodMode()
-            else
-                disableGodMode()
             end
         end
     })
