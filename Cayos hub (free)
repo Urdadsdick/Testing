@@ -21,6 +21,7 @@ if game.PlaceId == 11177482306 then
     _G.spinning = false
     _G.godmode = false
     _G.onePunch = false
+    _G.nameESP = false
 
     -- Function: Fly
     local function startFly()
@@ -97,6 +98,43 @@ if game.PlaceId == 11177482306 then
     -- Function: Disable One Punch
     local function disableOnePunch()
         _G.onePunch = false
+    end
+
+    -- Function: Enable Name ESP
+    local function enableNameESP()
+        _G.nameESP = true
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer then
+                local character = player.Character or player.CharacterAdded:Wait()
+                local head = character:WaitForChild("Head")
+                if not head:FindFirstChild("NameTag") then
+                    local billboardGui = Instance.new("BillboardGui", head)
+                    billboardGui.Name = "NameTag"
+                    billboardGui.Size = UDim2.new(0, 200, 0, 50)
+                    billboardGui.Adornee = head
+                    billboardGui.AlwaysOnTop = true
+
+                    local textLabel = Instance.new("TextLabel", billboardGui)
+                    textLabel.Size = UDim2.new(1, 0, 1, 0)
+                    textLabel.BackgroundTransparency = 1
+                    textLabel.Text = player.Name
+                    textLabel.TextColor3 = Color3.new(1, 1, 1)
+                    textLabel.TextScaled = true
+                end
+            end
+        end
+    end
+
+    -- Function: Disable Name ESP
+    local function disableNameESP()
+        _G.nameESP = false
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            local character = player.Character or player.CharacterAdded:Wait()
+            local head = character:WaitForChild("Head")
+            if head:FindFirstChild("NameTag") then
+                head.NameTag:Destroy()
+            end
+        end
     end
 
     -- Players Tab
@@ -198,6 +236,19 @@ if game.PlaceId == 11177482306 then
                 enableGodmode()
             else
                 disableGodmode()
+            end
+        end
+    })
+
+    -- Name ESP Toggle
+    usefulTab:AddToggle({
+        Name = "Enable Name ESP",
+        Default = false,
+        Callback = function(state)
+            if state then
+                enableNameESP()
+            else
+                disableNameESP()
             end
         end
     })
