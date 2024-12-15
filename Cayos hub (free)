@@ -1,7 +1,7 @@
 -- Load OrionLib
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
--- Create the GUI Window
+-- Create GUI Window
 local Window = OrionLib:MakeWindow({
     Name = "Cayos Hub for Street Wars 2",
     HidePremium = false,
@@ -9,16 +9,70 @@ local Window = OrionLib:MakeWindow({
     ConfigFolder = "CayosHubConfig"
 })
 
--- Global variables for features
-_G.autoMop = false
-_G.autoPickup = false
-_G.pickupRange = 5000000
-_G.onePunch = false
-_G.godMode = false
-_G.flying = false
+-- Global variables
 _G.speed = 50
-_G.noclip = false
-_G.autoJobFarm = false
+_G.autoFarm = false
+_G.autoPickup = false
+_G.pickupRange = 50
+_G.onePunch = false -- Ensure One Punch is initialized
+
+-- One Punch Function
+local function enableOnePunch()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    humanoidRootPart.Touched:Connect(function(hit)
+        local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
+        if _G.onePunch and otherPlayer and otherPlayer ~= player then
+            local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
+            if otherHumanoid then
+                otherHumanoid.Health = 0
+            end
+        end
+    end)
+end
+
+local function disableOnePunch()
+    _G.onePunch = false
+end
+
+-- Auto Farm Function
+local function startAutoFarm()
+    _G.autoFarm = true
+    while _G.autoFarm do
+        -- Add your autofarm logic here
+        task.wait(1)
+    end
+end
+
+local function stopAutoFarm()
+    _G.autoFarm = false
+end
+
+-- Auto Pickup Function
+local function startAutoPickup()
+    _G.autoPickup = true
+    while _G.autoPickup do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        for _, item in pairs(workspace:GetChildren()) do
+            if item:IsA("Tool") and item.Name:lower():find("gun") then
+                local distance = (character.HumanoidRootPart.Position - item.Position).Magnitude
+                if distance <= _G.pickupRange then
+                    firetouchinterest(character.HumanoidRootPart, item.Handle, 0)
+                    firetouchinterest(character.HumanoidRootPart, item.Handle, 1)
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end
+
+local function stopAutoPickup()
+    _G.autoPickup = false
+end
 
 -- Player Tab
 local playerTab = Window:MakeTab({
@@ -41,73 +95,6 @@ playerTab:AddSlider({
     end
 })
 
-playerTab:AddButton({
-    Name = "Fly",
-    Callback = function()
-        -- Fly function
-    end
-})
-
-playerTab:AddButton({
-    Name = "Unfly",
-    Callback = function()
-        -- Unfly function
-    end
-})
-
--- Auto Job Farm Tab
-local jobFarmTab = Window:MakeTab({
-    Name = "Auto Farm",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-jobFarmTab:AddToggle({
-    Name = "Enable Auto Job Farm",
-    Default = false,
-    Callback = function(state)
-        if state then
-            _G.autoJobFarm = true
-            -- Start Auto Job Farming logic here
-        else
-            _G.autoJobFarm = false
-        end
-    end
-})
-
-jobFarmTab:AddButton({
-    Name = "Start Auto Job Farm",
-    Callback = function()
-        -- Start Auto Job Farming logic here
-    end
-})
-
-jobFarmTab:AddButton({
-    Name = "Stop Auto Job Farm",
-    Callback = function()
-        -- Stop Auto Job Farming logic here
-    end
-})
-
--- Gun Tab
-local gunTab = Window:MakeTab({
-    Name = "Guns",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-gunTab:AddToggle({
-    Name = "Enable Auto Gun Pickup",
-    Default = false,
-    Callback = function(state)
-        if state then
-            -- Start Auto Gun Pickup logic here
-        else
-            -- Stop Auto Gun Pickup logic here
-        end
-    end
-})
-
 -- Useful Tab
 local usefulTab = Window:MakeTab({
     Name = "Useful",
@@ -116,53 +103,45 @@ local usefulTab = Window:MakeTab({
 })
 
 usefulTab:AddToggle({
-    Name = "God Mode",
-    Default = false,
-    Callback = function(state)
-        if state then
-            -- Enable God Mode logic here
-        else
-            -- Disable God Mode logic here
-        end
-    end
-})
-
-usefulTab:AddToggle({
     Name = "One Punch",
     Default = false,
     Callback = function(state)
         _G.onePunch = state
-        -- Enable One Punch logic here
-    end
-})
-
--- Misc Tab
-local miscTab = Window:MakeTab({
-    Name = "Misc",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-miscTab:AddToggle({
-    Name = "Auto Mop Farm",
-    Default = false,
-    Callback = function(state)
-        if state then
-            -- Start Auto Mop Farming logic here
+        if _G.onePunch then
+            enableOnePunch()  -- Activate One Punch function
         else
-            -- Stop Auto Mop Farming logic here
+            disableOnePunch() -- Deactivate One Punch function
         end
     end
 })
 
-miscTab:AddToggle({
-    Name = "Enable Hitbox Expander",
+-- AutoFarm Tab
+local autoFarmTab = Window:MakeTab({
+    Name = "AutoFarm",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+autoFarmTab:AddToggle({
+    Name = "Enable Auto Farm",
     Default = false,
     Callback = function(state)
         if state then
-            -- Expand hitbox logic here
+            startAutoFarm()
         else
-            -- Reset hitbox logic here
+            stopAutoFarm()
+        end
+    end
+})
+
+autoFarmTab:AddToggle({
+    Name = "Enable Auto Pickup",
+    Default = false,
+    Callback = function(state)
+        if state then
+            startAutoPickup()
+        else
+            stopAutoPickup()
         end
     end
 })
@@ -175,5 +154,3 @@ local creditsTab = Window:MakeTab({
 })
 
 creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: [https://discord.gg/yuJB7MkF](https://discord.gg/yuJB7MkF)")
-
--- Additional features can be added here...
