@@ -1,0 +1,209 @@
+if game.PlaceId == 11177482306 then
+    -- Display Intro Message
+    print("Cayos Hub for Street Wars 2")
+
+    -- Load OrionLib
+    local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+
+    -- Create a Window for the GUI
+    local Window = OrionLib:MakeWindow({
+        Name = "Cayos Hub for Street Wars 2",
+        HidePremium = false,
+        SaveConfig = true,
+        ConfigFolder = "OrionTest"
+    })
+
+    -- Initialize Global Values
+    _G.speed = 50
+    _G.flying = false
+    _G.infiniteAmmo = false
+    _G.autoPickup = false
+
+    -- Function: Fly
+    local function startFly()
+        if _G.flying then return end
+        _G.flying = true
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+        local bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
+        local bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
+        bodyGyro.P = 9e4
+        bodyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+        bodyGyro.CFrame = humanoidRootPart.CFrame
+        bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bodyVelocity.Velocity = Vector3.zero
+
+        local flySpeed = 50
+        while _G.flying do
+            bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+            bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * flySpeed
+            task.wait()
+        end
+
+        bodyGyro:Destroy()
+        bodyVelocity:Destroy()
+    end
+
+    -- Function: Stop Fly
+    local function stopFly()
+        _G.flying = false
+    end
+
+    -- Function: Make Player Invisible
+    local function makeInvisible()
+        local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Transparency = 1
+                if part:FindFirstChild("face") then
+                    part.face.Transparency = 1
+                end
+            elseif part:IsA("Clothing") or part:IsA("Accessory") then
+                part:Destroy()
+            end
+        end
+    end
+
+    -- Function: Make Player Visible
+    local function makeVisible()
+        local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Transparency = 0
+                if part:FindFirstChild("face") then
+                    part.face.Transparency = 0
+                end
+            end
+        end
+    end
+
+    -- Function: Infinite Ammo
+    local function enableInfiniteAmmo()
+        local player = game.Players.LocalPlayer
+        local backpack = player:WaitForChild("Backpack")
+
+        -- Check and update ammo properties
+        backpack.ChildAdded:Connect(function(tool)
+            if _G.infiniteAmmo and tool:FindFirstChild("Ammo") then
+                tool.Ammo:GetPropertyChangedSignal("Value"):Connect(function()
+                    tool.Ammo.Value = math.huge
+                end)
+            end
+        end)
+
+        -- Update currently equipped tools
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:FindFirstChild("Ammo") then
+                tool.Ammo.Value = math.huge
+            end
+        end
+    end
+
+    -- Function: Auto Pickup
+    local function enableAutoPickup()
+        while _G.autoPickup do
+            for _, item in ipairs(workspace:GetChildren()) do
+                if item:IsA("Tool") then
+                    local player = game.Players.LocalPlayer
+                    local character = player.Character or player.CharacterAdded:Wait()
+                    local humanoid = character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid:EquipTool(item)
+                    end
+                end
+            end
+            task.wait(0.1) -- Small delay to avoid lag
+        end
+    end
+
+    -- Players Tab
+    local playersTab = Window:MakeTab({
+        Name = "Players",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Speed Slider
+    playersTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Default = 50,
+        Callback = function(value)
+            _G.speed = value
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            if character and character:FindFirstChild("Humanoid") then
+                character.Humanoid.WalkSpeed = _G.speed
+            end
+        end
+    })
+
+    -- Invisible Player
+    playersTab:AddButton({
+        Name = "Make Player Invisible",
+        Callback = function()
+            makeInvisible()
+        end
+    })
+
+    -- Visible Player
+    playersTab:AddButton({
+        Name = "Make Player Visible",
+        Callback = function()
+            makeVisible()
+        end
+    })
+
+    -- Fly Button
+    playersTab:AddButton({
+        Name = "Fly",
+        Callback = function()
+            startFly()
+        end
+    })
+
+    -- Unfly Button
+    playersTab:AddButton({
+        Name = "Unfly",
+        Callback = function()
+            stopFly()
+        end
+    })
+
+    -- Guns Tab
+    local gunsTab = Window:MakeTab({
+        Name = "Guns",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Infinite Ammo Toggle
+    gunsTab:AddToggle({
+        Name = "Enable Infinite Ammo",
+        Default = false,
+        Callback = function(state)
+            _G.infiniteAmmo = state
+            if state then
+                enableInfiniteAmmo()
+            end
+        end
+    })
+
+    -- Auto Pickup Toggle
+    gunsTab:AddToggle({
+        Name = "Enable Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            _G.autoPickup = state
+            if state then
+                enableAutoPickup()
+            end
+        end
+    })
+
+    -- Initialize GUI
+    OrionLib:Init()
+end
