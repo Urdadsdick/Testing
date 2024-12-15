@@ -1,10 +1,10 @@
 -- GUI Setup using OrionLib
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({
-    Name = "Cayos Hub for Street Wars 2",
+    Name = "Goated Hub",
     HidePremium = false,
     SaveConfig = true,
-    ConfigFolder = "CayosHubConfig"
+    ConfigFolder = "GoatedHubConfig"
 })
 
 -- Global Variables
@@ -233,6 +233,28 @@ local function enableOnePunch()
             end
         end
     end)
+end
+
+-- Teleports Tab (Updated to Teleport to Wheel)
+local teleportTab = Window:MakeTab({
+    Name = "Teleports",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+teleportTab:AddButton({
+    Name = "Teleport to Wheel",
+    Callback = function()
+        teleportToWheel()
+    end
+})
+
+-- Function to teleport to the Wheel location
+local function teleportToWheel()
+    local wheelLocation = Vector3.new(100, 50, 200) -- Replace with actual coordinates for the wheel
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    character:MoveTo(wheelLocation)
 end
 
 -- Initialize GUI
