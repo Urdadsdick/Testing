@@ -1,75 +1,26 @@
--- Add Auto Job Farm (Box Collection and Selling) Tab
-local jobFarmTab = Window:MakeTab({
-    Name = "Auto Farm",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
+-- Load OrionLib
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+
+-- Create the GUI Window
+local Window = OrionLib:MakeWindow({
+    Name = "Cayos Hub for Street Wars 2",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "CayosHubConfig"
 })
 
--- Global variable for autofarming state
+-- Global variables for features
+_G.autoMop = false
+_G.autoPickup = false
+_G.pickupRange = 5000000
+_G.onePunch = false
+_G.godMode = false
+_G.flying = false
+_G.speed = 50
+_G.noclip = false
 _G.autoJobFarm = false
 
--- Function to start auto farming job (box collection)
-local function startAutoFarmJob()
-    _G.autoJobFarm = true
-    while _G.autoJobFarm do
-        -- Find box and job location
-        local box = workspace:FindFirstChild("Box")  -- Modify this based on actual item name
-        local jobLocation = workspace:FindFirstChild("JobLocation")  -- Modify this based on the job location
-        
-        if box and jobLocation then
-            -- Collect box
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, box, 0)  -- Simulate touch
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, box, 1)  -- Simulate pickup
-            
-            -- Wait for box collection, then sell it at job location
-            wait(0.5)
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, jobLocation, 0)  -- Simulate interaction
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, jobLocation, 1)  -- Simulate selling
-            
-            print("Auto Farm: Collected and sold a box.")
-        end
-        wait(1)  -- Adjust the wait time based on how fast you want to farm
-    end
-end
-
--- Function to stop auto farming
-local function stopAutoFarmJob()
-    _G.autoJobFarm = false
-    print("Auto Farm: Stopped.")
-end
-
--- Add a toggle in the UI for Auto Farm
-jobFarmTab:AddToggle({
-    Name = "Enable Auto Job Farm",
-    Default = false,
-    Callback = function(state)
-        if state then
-            startAutoFarmJob()
-        else
-            stopAutoFarmJob()
-        end
-    end
-})
-
--- Add a button to start the auto farm job manually if needed
-jobFarmTab:AddButton({
-    Name = "Start Auto Job Farm",
-    Callback = function()
-        startAutoFarmJob()
-    end
-})
-
-jobFarmTab:AddButton({
-    Name = "Stop Auto Job Farm",
-    Callback = function()
-        stopAutoFarmJob()
-    end
-})
-
--- Now we include all the other features that were in your original script.
--- Make sure the following tabs and features are added below:
-
--- Player Tab (Walk Speed, Fly, etc.)
+-- Player Tab
 local playerTab = Window:MakeTab({
     Name = "Player",
     Icon = "rbxassetid://4483345998",
@@ -83,8 +34,7 @@ playerTab:AddSlider({
     Default = _G.speed,
     Callback = function(value)
         _G.speed = value
-        local player = game.Players.LocalPlayer
-        local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+        local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
         if humanoid then
             humanoid.WalkSpeed = _G.speed
         end
@@ -94,18 +44,52 @@ playerTab:AddSlider({
 playerTab:AddButton({
     Name = "Fly",
     Callback = function()
-        startFly()
+        -- Fly function
     end
 })
 
 playerTab:AddButton({
     Name = "Unfly",
     Callback = function()
-        stopFly()
+        -- Unfly function
     end
 })
 
--- Guns Tab (Auto Pickup, etc.)
+-- Auto Job Farm Tab
+local jobFarmTab = Window:MakeTab({
+    Name = "Auto Farm",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+jobFarmTab:AddToggle({
+    Name = "Enable Auto Job Farm",
+    Default = false,
+    Callback = function(state)
+        if state then
+            _G.autoJobFarm = true
+            -- Start Auto Job Farming logic here
+        else
+            _G.autoJobFarm = false
+        end
+    end
+})
+
+jobFarmTab:AddButton({
+    Name = "Start Auto Job Farm",
+    Callback = function()
+        -- Start Auto Job Farming logic here
+    end
+})
+
+jobFarmTab:AddButton({
+    Name = "Stop Auto Job Farm",
+    Callback = function()
+        -- Stop Auto Job Farming logic here
+    end
+})
+
+-- Gun Tab
 local gunTab = Window:MakeTab({
     Name = "Guns",
     Icon = "rbxassetid://4483345998",
@@ -117,14 +101,14 @@ gunTab:AddToggle({
     Default = false,
     Callback = function(state)
         if state then
-            startAutoPickup()
+            -- Start Auto Gun Pickup logic here
         else
-            stopAutoPickup()
+            -- Stop Auto Gun Pickup logic here
         end
     end
 })
 
--- Useful Tab (God Mode, One Punch)
+-- Useful Tab
 local usefulTab = Window:MakeTab({
     Name = "Useful",
     Icon = "rbxassetid://4483345998",
@@ -136,9 +120,9 @@ usefulTab:AddToggle({
     Default = false,
     Callback = function(state)
         if state then
-            enableGodMode()
+            -- Enable God Mode logic here
         else
-            disableGodMode()
+            -- Disable God Mode logic here
         end
     end
 })
@@ -148,11 +132,11 @@ usefulTab:AddToggle({
     Default = false,
     Callback = function(state)
         _G.onePunch = state
-        enableOnePunch()
+        -- Enable One Punch logic here
     end
 })
 
--- Misc Tab (Auto Mop Farm, Hitbox Expander, etc.)
+-- Misc Tab
 local miscTab = Window:MakeTab({
     Name = "Misc",
     Icon = "rbxassetid://4483345998",
@@ -164,9 +148,9 @@ miscTab:AddToggle({
     Default = false,
     Callback = function(state)
         if state then
-            startAutoMopFarm()
+            -- Start Auto Mop Farming logic here
         else
-            stopAutoMopFarm()
+            -- Stop Auto Mop Farming logic here
         end
     end
 })
@@ -176,18 +160,14 @@ miscTab:AddToggle({
     Default = false,
     Callback = function(state)
         if state then
-            -- Function to expand the player's hitbox to 25 studs
-            game.Players.LocalPlayer.Character.Humanoid.HipWidth = 25
-            game.Players.LocalPlayer.Character.Humanoid.HipHeight = 25
+            -- Expand hitbox logic here
         else
-            -- Reset to default hitbox size
-            game.Players.LocalPlayer.Character.Humanoid.HipWidth = 2
-            game.Players.LocalPlayer.Character.Humanoid.HipHeight = 2
+            -- Reset hitbox logic here
         end
     end
 })
 
--- Credits Tab (Credits for the script)
+-- Credits Tab
 local creditsTab = Window:MakeTab({
     Name = "Credits",
     Icon = "rbxassetid://4483345998",
@@ -195,3 +175,5 @@ local creditsTab = Window:MakeTab({
 })
 
 creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: [https://discord.gg/yuJB7MkF](https://discord.gg/yuJB7MkF)")
+
+-- Additional features can be added here...
