@@ -1,7 +1,6 @@
--- Load OrionLib
+-- Initialize OrionLib
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
--- Create GUI Window
 local Window = OrionLib:MakeWindow({
     Name = "Cayos Hub for Street Wars 2",
     HidePremium = false,
@@ -9,14 +8,46 @@ local Window = OrionLib:MakeWindow({
     ConfigFolder = "CayosHubConfig"
 })
 
--- Global variables
-_G.speed = 50
-_G.autoFarm = false
+-- Initialize Global Variables
+_G.autoMop = false
 _G.autoPickup = false
-_G.pickupRange = 50
-_G.onePunch = false -- Ensure One Punch is initialized
+_G.pickupRange = 5000000
+_G.onePunch = false
+_G.godMode = false
+_G.flying = false
+_G.speed = 50
+_G.noclip = false
 
--- One Punch Function
+-- Function: Fly
+local function startFly()
+    if _G.flying then return end
+    _G.flying = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    
+    local bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
+    local bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
+    bodyGyro.P = 9e4
+    bodyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+    bodyGyro.CFrame = humanoidRootPart.CFrame
+    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+
+    while _G.flying do
+        bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+        bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * _G.speed
+        task.wait()
+    end
+
+    bodyGyro:Destroy()
+    bodyVelocity:Destroy()
+end
+
+local function stopFly()
+    _G.flying = false
+end
+
+-- Function: One Punch
 local function enableOnePunch()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
@@ -24,7 +55,7 @@ local function enableOnePunch()
 
     humanoidRootPart.Touched:Connect(function(hit)
         local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
-        if _G.onePunch and otherPlayer and otherPlayer ~= player then
+        if otherPlayer and otherPlayer ~= player then
             local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
             if otherHumanoid then
                 otherHumanoid.Health = 0
@@ -33,24 +64,26 @@ local function enableOnePunch()
     end)
 end
 
-local function disableOnePunch()
-    _G.onePunch = false
+-- Function: God Mode
+local function enableGodMode()
+    if _G.godMode then return end
+    _G.godMode = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChild("Humanoid")
+
+    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+        if _G.godMode and humanoid.Health < humanoid.MaxHealth then
+            humanoid.Health = humanoid.MaxHealth
+        end
+    end)
 end
 
--- Auto Farm Function
-local function startAutoFarm()
-    _G.autoFarm = true
-    while _G.autoFarm do
-        -- Add your autofarm logic here
-        task.wait(1)
-    end
+local function disableGodMode()
+    _G.godMode = false
 end
 
-local function stopAutoFarm()
-    _G.autoFarm = false
-end
-
--- Auto Pickup Function
+-- Function: Auto Pickup
 local function startAutoPickup()
     _G.autoPickup = true
     while _G.autoPickup do
@@ -74,6 +107,31 @@ local function stopAutoPickup()
     _G.autoPickup = false
 end
 
+-- Function: Auto Mop Farm
+local function startAutoMopFarm()
+    _G.autoMop = true
+    while _G.autoMop do
+        local mop = workspace:FindFirstChild("Mop")
+        local cashRegister = workspace:FindFirstChild("CashRegister")
+        if mop and cashRegister then
+            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mop, 0)
+            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, cashRegister, 1)
+        end
+        task.wait(0.1)
+    end
+end
+
+local function stopAutoMopFarm()
+    _G.autoMop = false
+end
+
+-- Teleports - Simplified and Direct
+local function teleportToLocation(position)
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    character:SetPrimaryPartCFrame(CFrame.new(position))
+end
+
 -- Player Tab
 local playerTab = Window:MakeTab({
     Name = "Player",
@@ -88,9 +146,43 @@ playerTab:AddSlider({
     Default = _G.speed,
     Callback = function(value)
         _G.speed = value
-        local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        local player = game.Players.LocalPlayer
+        local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
         if humanoid then
             humanoid.WalkSpeed = _G.speed
+        end
+    end
+})
+
+playerTab:AddButton({
+    Name = "Fly",
+    Callback = function()
+        startFly()
+    end
+})
+
+playerTab:AddButton({
+    Name = "Unfly",
+    Callback = function()
+        stopFly()
+    end
+})
+
+-- Gun Tab
+local gunTab = Window:MakeTab({
+    Name = "Guns",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+gunTab:AddToggle({
+    Name = "Enable Auto Gun Pickup",
+    Default = false,
+    Callback = function(state)
+        if state then
+            startAutoPickup()
+        else
+            stopAutoPickup()
         end
     end
 })
@@ -103,46 +195,58 @@ local usefulTab = Window:MakeTab({
 })
 
 usefulTab:AddToggle({
+    Name = "God Mode",
+    Default = false,
+    Callback = function(state)
+        if state then
+            enableGodMode()
+        else
+            disableGodMode()
+        end
+    end
+})
+
+usefulTab:AddToggle({
     Name = "One Punch",
     Default = false,
     Callback = function(state)
         _G.onePunch = state
         if _G.onePunch then
-            enableOnePunch()  -- Activate One Punch function
-        else
-            disableOnePunch() -- Deactivate One Punch function
+            enableOnePunch()
         end
     end
 })
 
--- AutoFarm Tab
-local autoFarmTab = Window:MakeTab({
-    Name = "AutoFarm",
+-- Misc Tab
+local miscTab = Window:MakeTab({
+    Name = "Misc",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-autoFarmTab:AddToggle({
-    Name = "Enable Auto Farm",
+miscTab:AddToggle({
+    Name = "Auto Mop Farm",
     Default = false,
     Callback = function(state)
         if state then
-            startAutoFarm()
+            startAutoMopFarm()
         else
-            stopAutoFarm()
+            stopAutoMopFarm()
         end
     end
 })
 
-autoFarmTab:AddToggle({
-    Name = "Enable Auto Pickup",
-    Default = false,
-    Callback = function(state)
-        if state then
-            startAutoPickup()
-        else
-            stopAutoPickup()
-        end
+-- Teleports Tab
+local teleportTab = Window:MakeTab({
+    Name = "Teleports",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+teleportTab:AddButton({
+    Name = "Teleport to Casino",
+    Callback = function()
+        teleportToLocation(Vector3.new(100, 0, 100)) -- Replace with actual casino coordinates
     end
 })
 
@@ -153,4 +257,4 @@ local creditsTab = Window:MakeTab({
     PremiumOnly = false
 })
 
-creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: [https://discord.gg/yuJB7MkF](https://discord.gg/yuJB7MkF)")
+creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: https://discord.gg/yuJB7MkF")
