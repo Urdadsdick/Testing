@@ -1,4 +1,4 @@
--- Initialize OrionLib
+-- Initialize OrionLib (Ensure it's accessible)
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
 local Window = OrionLib:MakeWindow({
@@ -8,17 +8,34 @@ local Window = OrionLib:MakeWindow({
     ConfigFolder = "CayosHubConfig"
 })
 
--- Initialize Global Variables
+-- Debugging function
+local function debugMessage(msg)
+    print("[DEBUG]: " .. msg)
+end
+
+-- Global Variables
 _G.autoMop = false
 _G.autoPickup = false
-_G.pickupRange = 5000000
 _G.onePunch = false
 _G.godMode = false
 _G.flying = false
 _G.speed = 50
-_G.noclip = false
 
--- Function to Fly
+-- GodMode
+local function toggleGodMode()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+
+    if _G.godMode then
+        humanoid.Health = humanoid.MaxHealth
+        debugMessage("God Mode: Enabled")
+    else
+        debugMessage("God Mode: Disabled")
+    end
+end
+
+-- Fly Functionality
 local function startFly()
     if _G.flying then return end
     _G.flying = true
@@ -33,10 +50,12 @@ local function startFly()
     bodyGyro.CFrame = humanoidRootPart.CFrame
     bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
 
+    debugMessage("Flying Enabled")
+
     while _G.flying do
         bodyGyro.CFrame = workspace.CurrentCamera.CFrame
         bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * _G.speed
-        task.wait()
+        wait(0.1)
     end
 
     bodyGyro:Destroy()
@@ -45,28 +64,10 @@ end
 
 local function stopFly()
     _G.flying = false
+    debugMessage("Flying Disabled")
 end
 
--- Function for God Mode
-local function enableGodMode()
-    if _G.godMode then return end
-    _G.godMode = true
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-
-    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-        if _G.godMode and humanoid.Health < humanoid.MaxHealth then
-            humanoid.Health = humanoid.MaxHealth
-        end
-    end)
-end
-
-local function disableGodMode()
-    _G.godMode = false
-end
-
--- Function for One Punch
+-- One Punch Mode
 local function enableOnePunch()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
@@ -78,89 +79,40 @@ local function enableOnePunch()
             local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
             if otherHumanoid then
                 otherHumanoid.Health = 0
+                debugMessage("One Punch: Killed " .. otherPlayer.Name)
             end
         end
     end)
 end
 
--- Function to Kill a Player
-local function killPlayer(targetPlayer)
-    local character = targetPlayer.Character
-    if character and character:FindFirstChild("Humanoid") then
-        local humanoid = character.Humanoid
-        humanoid.Health = 0
+-- Toggle One Punch Mode
+local function toggleOnePunch(state)
+    _G.onePunch = state
+    if _G.onePunch then
+        enableOnePunch()
+    else
+        debugMessage("One Punch: Disabled")
     end
 end
 
--- Function to Kill All Players
-local function killAllPlayers()
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            killPlayer(player)
-        end
-    end
-end
-
--- Trolling Tab
-local trollingTab = Window:MakeTab({
-    Name = "Trolling",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
--- Kill Player Dropdown
-trollingTab:AddDropdown({
-    Name = "Kill Player",
-    Options = function()
-        local playerNames = {}
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= game.Players.LocalPlayer then
-                table.insert(playerNames, player.Name)
-            end
-        end
-        return playerNames
-    end,
-    Callback = function(selectedPlayer)
-        local targetPlayer = game.Players:FindFirstChild(selectedPlayer)
-        if targetPlayer then
-            killPlayer(targetPlayer)
-        end
-    end
-})
-
--- Kill All Toggle
-trollingTab:AddToggle({
-    Name = "Kill All Players",
-    Default = false,
-    Callback = function(state)
-        if state then
-            killAllPlayers()
-        end
-    end
-})
-
--- Player Tab
+-- Main Window Setup
 local playerTab = Window:MakeTab({
     Name = "Player",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-playerTab:AddSlider({
-    Name = "Walk Speed",
-    Min = 16,
-    Max = 100,
-    Default = _G.speed,
-    Callback = function(value)
-        _G.speed = value
-        local player = game.Players.LocalPlayer
-        local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = _G.speed
-        end
+-- God Mode Toggle
+playerTab:AddToggle({
+    Name = "God Mode",
+    Default = false,
+    Callback = function(state)
+        _G.godMode = state
+        toggleGodMode()
     end
 })
 
+-- Fly Controls
 playerTab:AddButton({
     Name = "Fly",
     Callback = function()
@@ -169,13 +121,20 @@ playerTab:AddButton({
 })
 
 playerTab:AddButton({
-    Name = "Unfly",
+    Name = "Stop Fly",
     Callback = function()
         stopFly()
     end
 })
 
--- Useful Tab
+-- One Punch Toggle
+playerTab:AddToggle({
+    Name = "One Punch Mode",
+    Default = false,
+    Callback = toggleOnePunch
+})
+
+-- Auto Pickup Toggle (for items, etc.)
 local usefulTab = Window:MakeTab({
     Name = "Useful",
     Icon = "rbxassetid://4483345998",
@@ -183,46 +142,13 @@ local usefulTab = Window:MakeTab({
 })
 
 usefulTab:AddToggle({
-    Name = "God Mode",
+    Name = "Auto Pickup",
     Default = false,
     Callback = function(state)
-        if state then
-            enableGodMode()
-        else
-            disableGodMode()
-        end
+        _G.autoPickup = state
+        debugMessage("Auto Pickup: " .. (state and "Enabled" or "Disabled"))
     end
 })
 
-usefulTab:AddToggle({
-    Name = "One Punch",
-    Default = false,
-    Callback = function(state)
-        _G.onePunch = state
-        enableOnePunch()
-    end
-})
-
--- Gun Tab
-local gunTab = Window:MakeTab({
-    Name = "Guns",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-gunTab:AddToggle({
-    Name = "Enable Auto Gun Pickup",
-    Default = false,
-    Callback = function(state)
-        if state then
-            startAutoPickup()
-        else
-            stopAutoPickup()
-        end
-    end
-})
-
--- Teleport Tab
-local teleportTab = Window:MakeTab({
-    Name = "Teleports",
-    Icon
+-- Debug Logging
+debugMessage("Script Loaded and Ready.")
