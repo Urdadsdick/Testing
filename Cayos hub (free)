@@ -22,6 +22,7 @@ if game.PlaceId == 11177482306 then
     _G.godmode = false
     _G.onePunch = false
     _G.nameESP = false
+    _G.autoMop = false
 
     -- Function: Fly
     local function startFly()
@@ -55,27 +56,35 @@ if game.PlaceId == 11177482306 then
         _G.flying = false
     end
 
-    -- Function: Enable Godmode
-    local function enableGodmode()
+    -- Improved God Mode: Complete Invincibility
+    local function enableGodMode()
         if _G.godmode then return end
         _G.godmode = true
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
-        local humanoid = character:WaitForChild("Humanoid")
+        local humanoid = character:FindFirstChild("Humanoid")
 
+        -- Monitor and restore health
         humanoid:GetPropertyChangedSignal("Health"):Connect(function()
             if _G.godmode and humanoid.Health < humanoid.MaxHealth then
                 humanoid.Health = humanoid.MaxHealth
             end
         end)
+
+        -- Prevent all damage effects
+        character.DescendantAdded:Connect(function(descendant)
+            if _G.godmode and descendant:IsA("Humanoid") and descendant ~= humanoid then
+                descendant.Health = humanoid.MaxHealth
+            end
+        end)
     end
 
     -- Function: Disable Godmode
-    local function disableGodmode()
+    local function disableGodMode()
         _G.godmode = false
     end
 
-    -- Function: One Punch
+    -- Function: Enable One Punch
     local function enableOnePunch()
         if _G.onePunch then return end
         _G.onePunch = true
@@ -83,7 +92,6 @@ if game.PlaceId == 11177482306 then
         local character = player.Character or player.CharacterAdded:Wait()
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
-        -- Detect collision with other players
         humanoidRootPart.Touched:Connect(function(hit)
             local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
             if otherPlayer and otherPlayer ~= player then
@@ -100,125 +108,40 @@ if game.PlaceId == 11177482306 then
         _G.onePunch = false
     end
 
-    -- Function: Enable Name ESP
-    local function enableNameESP()
-        _G.nameESP = true
-        for _, player in ipairs(game.Players:GetPlayers()) do
-            if player ~= game.Players.LocalPlayer then
-                local character = player.Character or player.CharacterAdded:Wait()
-                local head = character:WaitForChild("Head")
-                if not head:FindFirstChild("NameTag") then
-                    local billboardGui = Instance.new("BillboardGui", head)
-                    billboardGui.Name = "NameTag"
-                    billboardGui.Size = UDim2.new(0, 200, 0, 50)
-                    billboardGui.Adornee = head
-                    billboardGui.AlwaysOnTop = true
+    -- Function: Automatic Mop Autofarm
+    local function startMopAutofarm()
+        if _G.autoMop then return end
+        _G.autoMop = true
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
 
-                    local textLabel = Instance.new("TextLabel", billboardGui)
-                    textLabel.Size = UDim2.new(1, 0, 1, 0)
-                    textLabel.BackgroundTransparency = 1
-                    textLabel.Text = player.Name
-                    textLabel.TextColor3 = Color3.new(1, 1, 1)
-                    textLabel.TextScaled = true
+        while _G.autoMop do
+            local backpack = player:FindFirstChild("Backpack")
+            local mop = backpack and backpack:FindFirstChild("Mop")
+
+            if mop then
+                character.Humanoid:EquipTool(mop)
+
+                for _, spot in pairs(workspace.LittlePakiShop.CleaningSpots:GetChildren()) do
+                    if spot:IsA("Part") and spot:FindFirstChild("Cleanable") then
+                        character.HumanoidRootPart.CFrame = spot.CFrame
+                        task.wait(1) -- Simulate cleaning
+                        firetouchinterest(character.HumanoidRootPart, spot, 0)
+                        firetouchinterest(character.HumanoidRootPart, spot, 1)
+                    end
                 end
-            end
-        end
-    end
-
-    -- Function: Disable Name ESP
-    local function disableNameESP()
-        _G.nameESP = false
-        for _, player in ipairs(game.Players:GetPlayers()) do
-            local character = player.Character or player.CharacterAdded:Wait()
-            local head = character:WaitForChild("Head")
-            if head:FindFirstChild("NameTag") then
-                head.NameTag:Destroy()
-            end
-        end
-    end
-
-    -- Players Tab
-    local playersTab = Window:MakeTab({
-        Name = "Players",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- Speed Slider
-    playersTab:AddSlider({
-        Name = "Walk Speed",
-        Min = 16,
-        Max = 100,
-        Default = 50,
-        Callback = function(value)
-            _G.speed = value
-            local player = game.Players.LocalPlayer
-            local character = player.Character or player.CharacterAdded:Wait()
-            if character and character:FindFirstChild("Humanoid") then
-                character.Humanoid.WalkSpeed = _G.speed
-            end
-        end
-    })
-
-    -- Fly Button
-    playersTab:AddButton({
-        Name = "Fly",
-        Callback = function()
-            startFly()
-        end
-    })
-
-    -- Unfly Button
-    playersTab:AddButton({
-        Name = "Unfly",
-        Callback = function()
-            stopFly()
-        end
-    })
-
-    -- One Punch Toggle
-    playersTab:AddToggle({
-        Name = "Enable One Punch",
-        Default = false,
-        Callback = function(state)
-            if state then
-                enableOnePunch()
             else
-                disableOnePunch()
+                warn("Mop not found! Check inventory.")
+                break
             end
-        end
-    })
 
-    -- Guns Tab
-    local gunsTab = Window:MakeTab({
-        Name = "Guns",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- Infinite Ammo Toggle
-    gunsTab:AddToggle({
-        Name = "Enable Infinite Ammo",
-        Default = false,
-        Callback = function(state)
-            _G.infiniteAmmo = state
-            if state then
-                enableInfiniteAmmo()
-            end
+            task.wait(5) -- Delay between loops
         end
-    })
+    end
 
-    -- Auto Pickup Toggle
-    gunsTab:AddToggle({
-        Name = "Enable Auto Pickup",
-        Default = false,
-        Callback = function(state)
-            _G.autoPickup = state
-            if state then
-                enableAutoPickup()
-            end
-        end
-    })
+    local function stopMopAutofarm()
+        _G.autoMop = false
+    end
 
     -- Useful Tab
     local usefulTab = Window:MakeTab({
@@ -233,9 +156,9 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             if state then
-                enableGodmode()
+                enableGodMode()
             else
-                disableGodmode()
+                disableGodMode()
             end
         end
     })
@@ -249,6 +172,26 @@ if game.PlaceId == 11177482306 then
                 enableNameESP()
             else
                 disableNameESP()
+            end
+        end
+    })
+
+    -- Autofarm Tab
+    local autofarmTab = Window:MakeTab({
+        Name = "Autofarm",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Mop Autofarm Toggle
+    autofarmTab:AddToggle({
+        Name = "Enable Mop Autofarm",
+        Default = false,
+        Callback = function(state)
+            if state then
+                startMopAutofarm()
+            else
+                stopMopAutofarm()
             end
         end
     })
