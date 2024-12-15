@@ -5,24 +5,23 @@ if game.PlaceId == 11177482306 then
     -- Load OrionLib
     local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 
-    -- Create a Window for the GUI
+    -- Create GUI Window
     local Window = OrionLib:MakeWindow({
         Name = "Cayos Hub for Street Wars 2",
         HidePremium = false,
         SaveConfig = true,
-        ConfigFolder = "OrionTest"
+        ConfigFolder = "CayosHubConfig"
     })
 
-    -- Initialize Global Values
-    _G.speed = 50
-    _G.flying = false
-    _G.infiniteAmmo = false
-    _G.autoPickup = false
-    _G.spinning = false
-    _G.godmode = false
-    _G.onePunch = false
-    _G.nameESP = false
+    -- Initialize Global Variables
     _G.autoMop = false
+    _G.autoPickup = false
+    _G.pickupRange = 5000000
+    _G.onePunch = false
+    _G.godMode = false
+    _G.flying = false
+    _G.speed = 50
+    _G.noclip = false
 
     -- Function: Fly
     local function startFly()
@@ -38,12 +37,10 @@ if game.PlaceId == 11177482306 then
         bodyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
         bodyGyro.CFrame = humanoidRootPart.CFrame
         bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-        bodyVelocity.Velocity = Vector3.zero
 
-        local flySpeed = 50
         while _G.flying do
             bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-            bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * flySpeed
+            bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * _G.speed
             task.wait()
         end
 
@@ -51,97 +48,142 @@ if game.PlaceId == 11177482306 then
         bodyVelocity:Destroy()
     end
 
-    -- Function: Stop Fly
     local function stopFly()
         _G.flying = false
     end
 
-    -- Improved God Mode: Complete Invincibility
+    -- Function: God Mode
     local function enableGodMode()
-        if _G.godmode then return end
-        _G.godmode = true
+        if _G.godMode then return end
+        _G.godMode = true
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local humanoid = character:FindFirstChild("Humanoid")
 
-        -- Monitor and restore health
         humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-            if _G.godmode and humanoid.Health < humanoid.MaxHealth then
+            if _G.godMode and humanoid.Health < humanoid.MaxHealth then
                 humanoid.Health = humanoid.MaxHealth
             end
         end)
-
-        -- Prevent all damage effects
-        character.DescendantAdded:Connect(function(descendant)
-            if _G.godmode and descendant:IsA("Humanoid") and descendant ~= humanoid then
-                descendant.Health = humanoid.MaxHealth
-            end
-        end)
     end
 
-    -- Function: Disable Godmode
     local function disableGodMode()
-        _G.godmode = false
+        _G.godMode = false
     end
 
-    -- Function: Enable One Punch
+    -- Function: One Punch
     local function enableOnePunch()
-        if _G.onePunch then return end
-        _G.onePunch = true
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
         humanoidRootPart.Touched:Connect(function(hit)
             local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
-            if otherPlayer and otherPlayer ~= player then
+            if _G.onePunch and otherPlayer and otherPlayer ~= player then
                 local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
                 if otherHumanoid then
-                    otherHumanoid.Health = 0 -- Set the other player's health to 0
+                    otherHumanoid.Health = 0
                 end
             end
         end)
     end
 
-    -- Function: Disable One Punch
-    local function disableOnePunch()
-        _G.onePunch = false
-    end
-
-    -- Function: Automatic Mop Autofarm
-    local function startMopAutofarm()
-        if _G.autoMop then return end
+    -- Function: Auto Mop Farm
+    local function startAutoMopFarm()
         _G.autoMop = true
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-
         while _G.autoMop do
-            local backpack = player:FindFirstChild("Backpack")
-            local mop = backpack and backpack:FindFirstChild("Mop")
-
-            if mop then
-                character.Humanoid:EquipTool(mop)
-
-                for _, spot in pairs(workspace.LittlePakiShop.CleaningSpots:GetChildren()) do
-                    if spot:IsA("Part") and spot:FindFirstChild("Cleanable") then
-                        character.HumanoidRootPart.CFrame = spot.CFrame
-                        task.wait(1) -- Simulate cleaning
-                        firetouchinterest(character.HumanoidRootPart, spot, 0)
-                        firetouchinterest(character.HumanoidRootPart, spot, 1)
-                    end
-                end
-            else
-                warn("Mop not found! Check inventory.")
-                break
+            local mop = workspace:FindFirstChild("Mop")
+            local cashRegister = workspace:FindFirstChild("CashRegister")
+            if mop and cashRegister then
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mop, 0)
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, cashRegister, 1)
             end
-
-            task.wait(5) -- Delay between loops
+            task.wait(0.1)
         end
     end
 
-    local function stopMopAutofarm()
+    local function stopAutoMopFarm()
         _G.autoMop = false
     end
+
+    -- Function: Auto Gun Pickup
+    local function startAutoPickup()
+        _G.autoPickup = true
+        while _G.autoPickup do
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+
+            for _, item in pairs(workspace:GetChildren()) do
+                if item:IsA("Tool") and item.Name:lower():find("gun") then
+                    local distance = (character.HumanoidRootPart.Position - item.Position).Magnitude
+                    if distance <= _G.pickupRange then
+                        firetouchinterest(character.HumanoidRootPart, item.Handle, 0)
+                        firetouchinterest(character.HumanoidRootPart, item.Handle, 1)
+                    end
+                end
+            end
+            task.wait(0.1)
+        end
+    end
+
+    local function stopAutoPickup()
+        _G.autoPickup = false
+    end
+
+    -- Player Tab
+    local playerTab = Window:MakeTab({
+        Name = "Player",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    playerTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Default = _G.speed,
+        Callback = function(value)
+            _G.speed = value
+            local player = game.Players.LocalPlayer
+            local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = _G.speed
+            end
+        end
+    })
+
+    playerTab:AddButton({
+        Name = "Fly",
+        Callback = function()
+            startFly()
+        end
+    })
+
+    playerTab:AddButton({
+        Name = "Unfly",
+        Callback = function()
+            stopFly()
+        end
+    })
+
+    -- Gun Tab
+    local gunTab = Window:MakeTab({
+        Name = "Guns",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    gunTab:AddToggle({
+        Name = "Enable Auto Gun Pickup",
+        Default = false,
+        Callback = function(state)
+            if state then
+                startAutoPickup()
+            else
+                stopAutoPickup()
+            end
+        end
+    })
 
     -- Useful Tab
     local usefulTab = Window:MakeTab({
@@ -150,9 +192,8 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    -- Godmode Toggle
     usefulTab:AddToggle({
-        Name = "Enable Godmode",
+        Name = "God Mode",
         Default = false,
         Callback = function(state)
             if state then
@@ -163,49 +204,14 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Name ESP Toggle
     usefulTab:AddToggle({
-        Name = "Enable Name ESP",
+        Name = "One Punch",
         Default = false,
         Callback = function(state)
-            if state then
-                enableNameESP()
-            else
-                disableNameESP()
-            end
+            _G.onePunch = state
+            enableOnePunch()
         end
     })
-
-    -- Autofarm Tab
-    local autofarmTab = Window:MakeTab({
-        Name = "Autofarm",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- Mop Autofarm Toggle
-    autofarmTab:AddToggle({
-        Name = "Enable Mop Autofarm",
-        Default = false,
-        Callback = function(state)
-            if state then
-                startMopAutofarm()
-            else
-                stopMopAutofarm()
-            end
-        end
-    })
-
-    -- Creds Tab
-    local credsTab = Window:MakeTab({
-        Name = "Creds",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    credsTab:AddLabel("Developed by: Your Name")
-    credsTab:AddLabel("Script by: Your Name")
-    credsTab:AddLabel("Special Thanks to: Community and Supporters")
 
     -- Misc Tab
     local miscTab = Window:MakeTab({
@@ -214,30 +220,26 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    miscTab:AddButton({
-        Name = "Reset Player",
-        Callback = function()
-            local player = game.Players.LocalPlayer
-            local character = player.Character or player.CharacterAdded:Wait()
-            character:BreakJoints() -- Resets the player
+    miscTab:AddToggle({
+        Name = "Auto Mop Farm",
+        Default = false,
+        Callback = function(state)
+            if state then
+                startAutoMopFarm()
+            else
+                stopAutoMopFarm()
+            end
         end
     })
 
-    -- Other Tab
-    local otherTab = Window:MakeTab({
-        Name = "Other",
+    -- Credits Tab
+    local creditsTab = Window:MakeTab({
+        Name = "Credits",
         Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
-    otherTab:AddButton({
-        Name = "Print Player's Info",
-        Callback = function()
-            local player = game.Players.LocalPlayer
-            print("Player Name: " .. player.Name)
-            print("Player User ID: " .. player.UserId)
-        end
-    })
+    creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.")
 
     -- Initialize GUI
     OrionLib:Init()
