@@ -1,218 +1,126 @@
--- GUI Setup using OrionLib
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({
-    Name = "Goated Hub",
-    HidePremium = false,
-    SaveConfig = true,
-    ConfigFolder = "GoatedHubConfig"
-})
+if game.PlaceId == 11177482306 then
+    -- Display Intro Message
+    print("Goated Hub for Street Wars 2")
 
--- Global Variables
-_G.autoMop = false
-_G.autoPickup = false
-_G.onePunch = false
-_G.godMode = false
-_G.flying = false
-_G.speed = 50
-_G.noclip = false
+    -- Load Vape Hub UI
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/THE-HUB-TOOL/VapeHub/main/VapeHub.lua'))()
 
--- Player Tab (Includes No Clip, Fly, Unfly, and Speed Slider)
-local playerTab = Window:MakeTab({
-    Name = "Player",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
+    -- Create Vape Hub Window
+    local Window = VapeHub:CreateWindow({
+        Title = "Goated Hub for Street Wars 2",
+        HidePremium = false,
+        SaveConfig = true,
+        ConfigFolder = "GoatedHubConfig"
+    })
 
-playerTab:AddSlider({
-    Name = "Walk Speed",
-    Min = 16,
-    Max = 100,
-    Default = _G.speed,
-    Callback = function(value)
-        _G.speed = value
-        local player = game.Players.LocalPlayer
-        local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = _G.speed
-        end
-    end
-})
-
-playerTab:AddButton({
-    Name = "Fly",
-    Callback = function()
-        startFly()
-    end
-})
-
-playerTab:AddButton({
-    Name = "Unfly",
-    Callback = function()
-        stopFly()
-    end
-})
-
-playerTab:AddToggle({
-    Name = "No Clip",
-    Default = false,
-    Callback = function(state)
-        _G.noclip = state
-        if _G.noclip then
-            enableNoClip()
-        else
-            disableNoClip()
-        end
-    end
-})
-
--- Functions for Fly, Unfly, and No Clip
-local function startFly()
-    _G.flying = true
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(400000, 400000, 400000)
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.Parent = character:WaitForChild("HumanoidRootPart")
-    
-    local function flyingLoop()
-        if not _G.flying then
-            bodyVelocity:Destroy()
-        end
-        local velocity = Vector3.new(0, 0, 0)
-        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
-            velocity = Vector3.new(0, 50, 0)
-        end
-        bodyVelocity.Velocity = velocity
-    end
-    game:GetService("RunService").Heartbeat:Connect(flyingLoop)
-end
-
-local function stopFly()
-    _G.flying = false
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local bodyVelocity = character:FindFirstChildOfClass("BodyVelocity")
-    if bodyVelocity then
-        bodyVelocity:Destroy()
-    end
-end
-
-local function enableNoClip()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-    local parts = character:GetChildren()
-    
-    for _, part in pairs(parts) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
-    end
-    
-    character.HumanoidRootPart.Anchored = true
-end
-
-local function disableNoClip()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-    local parts = character:GetChildren()
-    
-    for _, part in pairs(parts) do
-        if part:IsA("BasePart") then
-            part.CanCollide = true
-        end
-    end
-    
-    character.HumanoidRootPart.Anchored = false
-end
-
--- Misc Tab (Includes God Mode, One Punch, etc.)
-local miscTab = Window:MakeTab({
-    Name = "Misc",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-miscTab:AddToggle({
-    Name = "God Mode",
-    Default = false,
-    Callback = function(state)
-        if state then
-            enableGodMode()
-        else
-            disableGodMode()
-        end
-    end
-})
-
-miscTab:AddToggle({
-    Name = "One Punch",
-    Default = false,
-    Callback = function(state)
-        _G.onePunch = state
-        enableOnePunch()
-    end
-})
-
--- Functions (God Mode, One Punch, etc.)
-local function enableGodMode()
-    if _G.godMode then return end
-    _G.godMode = true
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-
-    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-        if _G.godMode and humanoid.Health < humanoid.MaxHealth then
-            humanoid.Health = humanoid.MaxHealth
-        end
-    end)
-end
-
-local function disableGodMode()
+    -- Initialize Global Variables
+    _G.autoMop = false
+    _G.autoPickup = false
+    _G.pickupRange = 5000000
+    _G.onePunch = false
     _G.godMode = false
-end
+    _G.flying = false
+    _G.speed = 50
+    _G.noclip = false
 
-local function enableOnePunch()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-    humanoidRootPart.Touched:Connect(function(hit)
-        local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
-        if _G.onePunch and otherPlayer and otherPlayer ~= player then
-            local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
-            if otherHumanoid then
-                otherHumanoid.Health = 0
+    -- Function to Kill All Players except Local Player
+    local function killAllPlayers()
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer and player.Character then
+                local humanoid = player.Character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid.Health = 0
+                end
             end
         end
-    end)
-end
-
--- Teleports Tab (Updated to Teleport to Wheel)
-local teleportTab = Window:MakeTab({
-    Name = "Teleports",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-teleportTab:AddButton({
-    Name = "Teleport to Wheel",
-    Callback = function()
-        teleportToWheel()
     end
-})
 
--- Function to teleport to the Wheel location
-local function teleportToWheel()
-    local wheelLocation = Vector3.new(100, 50, 200) -- Replace with actual coordinates for the wheel
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    character:MoveTo(wheelLocation)
+    -- Function to Kill a Specific Player
+    local function killPlayer(playerToKill)
+        if playerToKill.Character then
+            local humanoid = playerToKill.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.Health = 0
+            end
+        end
+    end
+
+    -- Player Tab
+    local playerTab = Window:CreateTab("Player")
+    
+    -- Walk Speed Slider
+    playerTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Default = _G.speed,
+        Callback = function(value)
+            _G.speed = value
+            local player = game.Players.LocalPlayer
+            local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = _G.speed
+            end
+        end
+    })
+
+    -- Fly/Unfly Buttons
+    playerTab:AddButton({
+        Name = "Fly",
+        Callback = function()
+            startFly()
+        end
+    })
+
+    playerTab:AddButton({
+        Name = "Unfly",
+        Callback = function()
+            stopFly()
+        end
+    })
+
+    -- Teleports Tab
+    local teleportsTab = Window:CreateTab("Teleports")
+
+    teleportsTab:AddButton({
+        Name = "Teleport to Wheel",
+        Callback = function()
+            local wheelPosition = Vector3.new(0, 10, 0) -- Change this to actual wheel location
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(wheelPosition)
+        end
+    })
+
+    -- Troll Tab
+    local trollTab = Window:CreateTab("Troll")
+
+    -- Kill All Players Button
+    trollTab:AddButton({
+        Name = "Kill All Players",
+        Callback = function()
+            killAllPlayers()
+        end
+    })
+
+    -- Kill Player Dropdown (List of Players in Server)
+    local playersList = {}
+    for _, player in pairs(game.Players:GetPlayers()) do
+        table.insert(playersList, player.Name)
+    end
+
+    trollTab:AddDropdown({
+        Name = "Kill Player",
+        Options = playersList,
+        Callback = function(selectedPlayer)
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player.Name == selectedPlayer then
+                    killPlayer(player)
+                    break
+                end
+            end
+        end
+    })
+
+    -- Credits Tab
+    local creditsTab = Window:CreateTab("Credits")
+    creditsTab:AddParagraph("Credits", "Script by Goated.\nUI Framework by Vape Hub.\nDiscord: https://discord.gg/yuJB7MkF")
 end
-
--- Initialize GUI
-OrionLib:Init()
