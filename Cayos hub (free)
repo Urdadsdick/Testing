@@ -120,7 +120,18 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Credits Tab
-    local creditsTab = Window:CreateTab("Credits")
-    creditsTab:AddParagraph("Credits", "Script by Goated.\nUI Framework by Vape Hub.\nDiscord: https://discord.gg/yuJB7MkF")
+    -- Script Tab with Infinite Yield Toggle
+    local scriptTab = Window:CreateTab("Script")
+
+    -- Toggle for Infinite Yield
+    scriptTab:AddToggle({
+        Name = "Infinite Yield",
+        Default = false,
+        Callback = function(enabled)
+            if enabled then
+                -- Execute Infinite Yield when toggled on
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+            end
+        end
+    })
 end
