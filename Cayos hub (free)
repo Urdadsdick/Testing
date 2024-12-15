@@ -71,7 +71,7 @@ if game.PlaceId == 11177482306 then
         _G.godMode = false
     end
 
-    -- Function: One Punch
+    -- Updated Function: One Punch (Now using TakeDamage)
     local function enableOnePunch()
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
@@ -82,7 +82,7 @@ if game.PlaceId == 11177482306 then
             if _G.onePunch and otherPlayer and otherPlayer ~= player then
                 local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
                 if otherHumanoid then
-                    -- Trigger damage instead of directly setting health to zero
+                    -- Use TakeDamage to apply damage, instantly "killing" the target
                     otherHumanoid:TakeDamage(otherHumanoid.Health)
                 end
             end
