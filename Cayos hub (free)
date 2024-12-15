@@ -1,17 +1,13 @@
--- Initialize OrionLib (Ensure it's accessible)
+-- Load OrionLib
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
+-- Create Window for GUI
 local Window = OrionLib:MakeWindow({
     Name = "Cayos Hub for Street Wars 2",
     HidePremium = false,
     SaveConfig = true,
     ConfigFolder = "CayosHubConfig"
 })
-
--- Debugging function
-local function debugMessage(msg)
-    print("[DEBUG]: " .. msg)
-end
 
 -- Global Variables
 _G.autoMop = false
@@ -21,12 +17,17 @@ _G.godMode = false
 _G.flying = false
 _G.speed = 50
 
+-- Debugging function for output
+local function debugMessage(msg)
+    print("[DEBUG]: " .. msg)
+end
+
 -- GodMode
 local function toggleGodMode()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid")
-
+    
     if _G.godMode then
         humanoid.Health = humanoid.MaxHealth
         debugMessage("God Mode: Enabled")
@@ -35,7 +36,7 @@ local function toggleGodMode()
     end
 end
 
--- Fly Functionality
+-- Fly
 local function startFly()
     if _G.flying then return end
     _G.flying = true
@@ -51,7 +52,7 @@ local function startFly()
     bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
 
     debugMessage("Flying Enabled")
-
+    
     while _G.flying do
         bodyGyro.CFrame = workspace.CurrentCamera.CFrame
         bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * _G.speed
@@ -85,14 +86,30 @@ local function enableOnePunch()
     end)
 end
 
--- Toggle One Punch Mode
-local function toggleOnePunch(state)
-    _G.onePunch = state
-    if _G.onePunch then
-        enableOnePunch()
-    else
-        debugMessage("One Punch: Disabled")
+-- Auto Pickup
+local function startAutoPickup()
+    _G.autoPickup = true
+    while _G.autoPickup do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        for _, item in pairs(workspace:GetChildren()) do
+            if item:IsA("Tool") and item.Name:lower():find("gun") then
+                local distance = (character.HumanoidRootPart.Position - item.Position).Magnitude
+                if distance <= 50 then  -- Pickup range
+                    firetouchinterest(character.HumanoidRootPart, item.Handle, 0)
+                    firetouchinterest(character.HumanoidRootPart, item.Handle, 1)
+                    debugMessage("Picked up item: " .. item.Name)
+                end
+            end
+        end
+        wait(0.1)
     end
+end
+
+local function stopAutoPickup()
+    _G.autoPickup = false
+    debugMessage("Auto Pickup: Disabled")
 end
 
 -- Main Window Setup
@@ -131,10 +148,17 @@ playerTab:AddButton({
 playerTab:AddToggle({
     Name = "One Punch Mode",
     Default = false,
-    Callback = toggleOnePunch
+    Callback = function(state)
+        _G.onePunch = state
+        if _G.onePunch then
+            enableOnePunch()
+        else
+            debugMessage("One Punch: Disabled")
+        end
+    end
 })
 
--- Auto Pickup Toggle (for items, etc.)
+-- Auto Pickup Controls
 local usefulTab = Window:MakeTab({
     Name = "Useful",
     Icon = "rbxassetid://4483345998",
@@ -145,10 +169,39 @@ usefulTab:AddToggle({
     Name = "Auto Pickup",
     Default = false,
     Callback = function(state)
-        _G.autoPickup = state
-        debugMessage("Auto Pickup: " .. (state and "Enabled" or "Disabled"))
+        if state then
+            startAutoPickup()
+        else
+            stopAutoPickup()
+        end
     end
 })
 
--- Debug Logging
+-- Teleport Tab (Example: Teleport to Casino)
+local teleportTab = Window:MakeTab({
+    Name = "Teleports",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+teleportTab:AddButton({
+    Name = "Teleport to Casino",
+    Callback = function()
+        -- Coordinates for the casino (example location, needs to be accurate)
+        local casinoPosition = Vector3.new(100, 50, 200)
+        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(casinoPosition))
+        debugMessage("Teleported to Casino")
+    end
+})
+
+-- Credits Tab (Including Discord link)
+local creditsTab = Window:MakeTab({
+    Name = "Credits",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: https://discord.gg/yuJB7MkF")
+
+-- Final Debug Log
 debugMessage("Script Loaded and Ready.")
