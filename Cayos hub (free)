@@ -18,35 +18,36 @@ _G.flying = false
 _G.speed = 50
 _G.noclip = false
 
--- Function: Auto Pickup
-local function startAutoPickup()
-    _G.autoPickup = true
-    while _G.autoPickup do
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local hrp = character.HumanoidRootPart
-            -- Loop through all the items in the workspace that are tools (we'll assume tools are pickupable)
-            for _, item in pairs(workspace:GetChildren()) do
-                if item:IsA("Tool") and item.Name:lower():find("gun") then
-                    local distance = (hrp.Position - item.Position).Magnitude
-                    if distance <= _G.pickupRange then
-                        -- Attempt to "pick up" the item by simulating a touch
-                        firetouchinterest(hrp, item.Handle, 0)
-                        firetouchinterest(hrp, item.Handle, 1)
-                    end
-                end
-            end
-        end
-        task.wait(0.1)
+-- Function to Fly
+local function startFly()
+    if _G.flying then return end
+    _G.flying = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    local bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
+    local bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
+    bodyGyro.P = 9e4
+    bodyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+    bodyGyro.CFrame = humanoidRootPart.CFrame
+    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+
+    while _G.flying do
+        bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+        bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * _G.speed
+        task.wait()
     end
+
+    bodyGyro:Destroy()
+    bodyVelocity:Destroy()
 end
 
-local function stopAutoPickup()
-    _G.autoPickup = false
+local function stopFly()
+    _G.flying = false
 end
 
--- Function: God Mode (Improved)
+-- Function for God Mode
 local function enableGodMode()
     if _G.godMode then return end
     _G.godMode = true
@@ -54,48 +55,87 @@ local function enableGodMode()
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoid = character:FindFirstChild("Humanoid")
 
-    if humanoid then
-        -- Override health updates to prevent death
-        humanoid.HealthChanged:Connect(function(health)
-            if _G.godMode and health < humanoid.MaxHealth then
-                humanoid.Health = humanoid.MaxHealth
-            end
-        end)
-
-        -- Prevent any death-related changes
-        humanoid.Died:Connect(function()
-            if _G.godMode then
-                humanoid.Health = humanoid.MaxHealth
-                -- Optionally, teleport the player to a safe position or reset actions
-            end
-        end)
-    end
+    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+        if _G.godMode and humanoid.Health < humanoid.MaxHealth then
+            humanoid.Health = humanoid.MaxHealth
+        end
+    end)
 end
 
 local function disableGodMode()
     _G.godMode = false
 end
 
--- Teleportation Function
-local function teleportToLocation(position)
+-- Function for One Punch
+local function enableOnePunch()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
-    if character and character:FindFirstChild("HumanoidRootPart") then
-        character:SetPrimaryPartCFrame(CFrame.new(position))
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    humanoidRootPart.Touched:Connect(function(hit)
+        local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
+        if _G.onePunch and otherPlayer and otherPlayer ~= player then
+            local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
+            if otherHumanoid then
+                otherHumanoid.Health = 0
+            end
+        end
+    end)
+end
+
+-- Function to Kill a Player
+local function killPlayer(targetPlayer)
+    local character = targetPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        local humanoid = character.Humanoid
+        humanoid.Health = 0
     end
 end
 
--- Teleports Tab
-local teleportTab = Window:MakeTab({
-    Name = "Teleports",
+-- Function to Kill All Players
+local function killAllPlayers()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            killPlayer(player)
+        end
+    end
+end
+
+-- Trolling Tab
+local trollingTab = Window:MakeTab({
+    Name = "Trolling",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-teleportTab:AddButton({
-    Name = "Teleport to Casino",
-    Callback = function()
-        teleportToLocation(Vector3.new(100, 0, 100)) -- Replace with actual casino coordinates
+-- Kill Player Dropdown
+trollingTab:AddDropdown({
+    Name = "Kill Player",
+    Options = function()
+        local playerNames = {}
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer then
+                table.insert(playerNames, player.Name)
+            end
+        end
+        return playerNames
+    end,
+    Callback = function(selectedPlayer)
+        local targetPlayer = game.Players:FindFirstChild(selectedPlayer)
+        if targetPlayer then
+            killPlayer(targetPlayer)
+        end
+    end
+})
+
+-- Kill All Toggle
+trollingTab:AddToggle({
+    Name = "Kill All Players",
+    Default = false,
+    Callback = function(state)
+        if state then
+            killAllPlayers()
+        end
     end
 })
 
@@ -121,7 +161,21 @@ playerTab:AddSlider({
     end
 })
 
--- God Mode and Auto Pickup Toggle
+playerTab:AddButton({
+    Name = "Fly",
+    Callback = function()
+        startFly()
+    end
+})
+
+playerTab:AddButton({
+    Name = "Unfly",
+    Callback = function()
+        stopFly()
+    end
+})
+
+-- Useful Tab
 local usefulTab = Window:MakeTab({
     Name = "Useful",
     Icon = "rbxassetid://4483345998",
@@ -141,7 +195,23 @@ usefulTab:AddToggle({
 })
 
 usefulTab:AddToggle({
-    Name = "Auto Pickup",
+    Name = "One Punch",
+    Default = false,
+    Callback = function(state)
+        _G.onePunch = state
+        enableOnePunch()
+    end
+})
+
+-- Gun Tab
+local gunTab = Window:MakeTab({
+    Name = "Guns",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+gunTab:AddToggle({
+    Name = "Enable Auto Gun Pickup",
     Default = false,
     Callback = function(state)
         if state then
@@ -152,11 +222,7 @@ usefulTab:AddToggle({
     end
 })
 
--- Credits Tab
-local creditsTab = Window:MakeTab({
-    Name = "Credits",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: https://discord.gg/yuJB7MkF")
+-- Teleport Tab
+local teleportTab = Window:MakeTab({
+    Name = "Teleports",
+    Icon
