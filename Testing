@@ -1,0 +1,137 @@
+if game.PlaceId == 11177482306 then
+    -- Display Intro Message
+    print("Goat")
+
+    -- Load the latest OrionLib for the GUI
+    local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+    
+    -- Create a Window for the GUI
+    local Window = OrionLib:MakeWindow({
+        Name = "Cayos Hub for Street Wars 2",
+        HidePremium = false,
+        SaveConfig = true,
+        ConfigFolder = "OrionTest"
+    })
+
+    -- Initialize Global Values for toggles and settings
+    _G.killall = false
+    _G.godmode = false
+    _G.onePunch = false
+    _G.speed = 50
+    _G.spin = false
+    _G.flingOthers = false
+    _G.hitboxExpander = false
+    _G.duplicateWeaponName = ""
+    _G.teleportLocation = Vector3.new(0, 10, 0)
+    
+    -- Function to enable God Mode (prevents health from decreasing)
+    function enableGodMode()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        -- Ensure the player has a humanoid to check health
+        if character and character:FindFirstChild("Humanoid") then
+            local humanoid = character.Humanoid
+
+            -- Monitor the health change of the player
+            humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                if _G.godmode then
+                    -- If health is less than max, reset it to max health
+                    if humanoid.Health < humanoid.MaxHealth then
+                        humanoid.Health = humanoid.MaxHealth
+                    end
+                end
+            end)
+        end
+    end
+
+    -- Function for One Punch (Instantly kills enemy)
+    function onePunch()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChild("Humanoid")
+
+        -- Function to detect when the player punches
+        if humanoid then
+            character.HumanoidRootPart.Touched:Connect(function(hit)
+                -- Check if it is an NPC or another player's character
+                local target = hit.Parent
+                if target and target:IsA("Model") and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+                    if _G.onePunch then
+                        -- Set health of the target to 0 (instant kill)
+                        target.Humanoid.Health = 0
+                    end
+                end
+            end)
+        end
+    end
+
+    -- GUI Tabs and Settings
+    local trollTab = Window:MakeTab({
+        Name = "Trolling",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Add Toggle for God Mode
+    trollTab:AddToggle({
+        Name = "Enable God Mode",
+        Default = false,
+        Callback = function(state)
+            _G.godmode = state
+            if state then
+                enableGodMode()
+            end
+        end
+    })
+
+    -- Add Toggle for One Punch
+    trollTab:AddToggle({
+        Name = "Enable One Punch",
+        Default = false,
+        Callback = function(state)
+            _G.onePunch = state
+            if state then
+                onePunch()
+            end
+        end
+    })
+
+    -- Add Slider for Speed
+    trollTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Default = 50,
+        Callback = function(value)
+            _G.speed = value
+            -- Adjust speed of the player
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            if character and character:FindFirstChild("Humanoid") then
+                character.Humanoid.WalkSpeed = _G.speed
+            end
+        end
+    })
+
+    -- GUI for Guns Tab
+    local gunsTab = Window:MakeTab({
+        Name = "Guns",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Add Toggle for Infinite Ammo
+    gunsTab:AddToggle({
+        Name = "Enable Infinite Ammo",
+        Default = false,
+        Callback = function(state)
+            _G.autoBuyCards = state
+            -- Implement Infinite Ammo logic here
+        end
+    })
+
+    -- Initialize the OrionLib GUI
+    OrionLib:Init()
+
+end
