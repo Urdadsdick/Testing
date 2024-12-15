@@ -18,84 +18,23 @@ _G.flying = false
 _G.speed = 50
 _G.noclip = false
 
--- Function: Fly
-local function startFly()
-    if _G.flying then return end
-    _G.flying = true
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-    
-    local bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
-    local bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
-    bodyGyro.P = 9e4
-    bodyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
-    bodyGyro.CFrame = humanoidRootPart.CFrame
-    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-
-    while _G.flying do
-        bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-        bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * _G.speed
-        task.wait()
-    end
-
-    bodyGyro:Destroy()
-    bodyVelocity:Destroy()
-end
-
-local function stopFly()
-    _G.flying = false
-end
-
--- Function: One Punch
-local function enableOnePunch()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-    humanoidRootPart.Touched:Connect(function(hit)
-        local otherPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
-        if otherPlayer and otherPlayer ~= player then
-            local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
-            if otherHumanoid then
-                otherHumanoid.Health = 0
-            end
-        end
-    end)
-end
-
--- Function: God Mode
-local function enableGodMode()
-    if _G.godMode then return end
-    _G.godMode = true
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-
-    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-        if _G.godMode and humanoid.Health < humanoid.MaxHealth then
-            humanoid.Health = humanoid.MaxHealth
-        end
-    end)
-end
-
-local function disableGodMode()
-    _G.godMode = false
-end
-
 -- Function: Auto Pickup
 local function startAutoPickup()
     _G.autoPickup = true
     while _G.autoPickup do
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
-
-        for _, item in pairs(workspace:GetChildren()) do
-            if item:IsA("Tool") and item.Name:lower():find("gun") then
-                local distance = (character.HumanoidRootPart.Position - item.Position).Magnitude
-                if distance <= _G.pickupRange then
-                    firetouchinterest(character.HumanoidRootPart, item.Handle, 0)
-                    firetouchinterest(character.HumanoidRootPart, item.Handle, 1)
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local hrp = character.HumanoidRootPart
+            -- Loop through all the items in the workspace that are tools (we'll assume tools are pickupable)
+            for _, item in pairs(workspace:GetChildren()) do
+                if item:IsA("Tool") and item.Name:lower():find("gun") then
+                    local distance = (hrp.Position - item.Position).Magnitude
+                    if distance <= _G.pickupRange then
+                        -- Attempt to "pick up" the item by simulating a touch
+                        firetouchinterest(hrp, item.Handle, 0)
+                        firetouchinterest(hrp, item.Handle, 1)
+                    end
                 end
             end
         end
@@ -107,30 +46,58 @@ local function stopAutoPickup()
     _G.autoPickup = false
 end
 
--- Function: Auto Mop Farm
-local function startAutoMopFarm()
-    _G.autoMop = true
-    while _G.autoMop do
-        local mop = workspace:FindFirstChild("Mop")
-        local cashRegister = workspace:FindFirstChild("CashRegister")
-        if mop and cashRegister then
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mop, 0)
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, cashRegister, 1)
-        end
-        task.wait(0.1)
+-- Function: God Mode (Improved)
+local function enableGodMode()
+    if _G.godMode then return end
+    _G.godMode = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChild("Humanoid")
+
+    if humanoid then
+        -- Override health updates to prevent death
+        humanoid.HealthChanged:Connect(function(health)
+            if _G.godMode and health < humanoid.MaxHealth then
+                humanoid.Health = humanoid.MaxHealth
+            end
+        end)
+
+        -- Prevent any death-related changes
+        humanoid.Died:Connect(function()
+            if _G.godMode then
+                humanoid.Health = humanoid.MaxHealth
+                -- Optionally, teleport the player to a safe position or reset actions
+            end
+        end)
     end
 end
 
-local function stopAutoMopFarm()
-    _G.autoMop = false
+local function disableGodMode()
+    _G.godMode = false
 end
 
--- Teleports - Simplified and Direct
+-- Teleportation Function
 local function teleportToLocation(position)
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
-    character:SetPrimaryPartCFrame(CFrame.new(position))
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        character:SetPrimaryPartCFrame(CFrame.new(position))
+    end
 end
+
+-- Teleports Tab
+local teleportTab = Window:MakeTab({
+    Name = "Teleports",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+teleportTab:AddButton({
+    Name = "Teleport to Casino",
+    Callback = function()
+        teleportToLocation(Vector3.new(100, 0, 100)) -- Replace with actual casino coordinates
+    end
+})
 
 -- Player Tab
 local playerTab = Window:MakeTab({
@@ -154,40 +121,7 @@ playerTab:AddSlider({
     end
 })
 
-playerTab:AddButton({
-    Name = "Fly",
-    Callback = function()
-        startFly()
-    end
-})
-
-playerTab:AddButton({
-    Name = "Unfly",
-    Callback = function()
-        stopFly()
-    end
-})
-
--- Gun Tab
-local gunTab = Window:MakeTab({
-    Name = "Guns",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-gunTab:AddToggle({
-    Name = "Enable Auto Gun Pickup",
-    Default = false,
-    Callback = function(state)
-        if state then
-            startAutoPickup()
-        else
-            stopAutoPickup()
-        end
-    end
-})
-
--- Useful Tab
+-- God Mode and Auto Pickup Toggle
 local usefulTab = Window:MakeTab({
     Name = "Useful",
     Icon = "rbxassetid://4483345998",
@@ -207,46 +141,14 @@ usefulTab:AddToggle({
 })
 
 usefulTab:AddToggle({
-    Name = "One Punch",
-    Default = false,
-    Callback = function(state)
-        _G.onePunch = state
-        if _G.onePunch then
-            enableOnePunch()
-        end
-    end
-})
-
--- Misc Tab
-local miscTab = Window:MakeTab({
-    Name = "Misc",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-miscTab:AddToggle({
-    Name = "Auto Mop Farm",
+    Name = "Auto Pickup",
     Default = false,
     Callback = function(state)
         if state then
-            startAutoMopFarm()
+            startAutoPickup()
         else
-            stopAutoMopFarm()
+            stopAutoPickup()
         end
-    end
-})
-
--- Teleports Tab
-local teleportTab = Window:MakeTab({
-    Name = "Teleports",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-teleportTab:AddButton({
-    Name = "Teleport to Casino",
-    Callback = function()
-        teleportToLocation(Vector3.new(100, 0, 100)) -- Replace with actual casino coordinates
     end
 })
 
