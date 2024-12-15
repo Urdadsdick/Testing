@@ -3,7 +3,7 @@ if game.PlaceId == 11177482306 then
     print("Goated Hub for Street Wars 2")
 
     -- Load Vape Hub UI
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/THE-HUB-TOOL/VapeHub/main/VapeHub.lua'))()
+    local VapeHub = loadstring(game:HttpGet('https://raw.githubusercontent.com/THE-HUB-TOOL/VapeHub/main/VapeHub.lua'))()
 
     -- Create Vape Hub Window
     local Window = VapeHub:CreateWindow({
