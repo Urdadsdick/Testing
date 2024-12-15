@@ -1,7 +1,5 @@
--- Load OrionLib
-local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
-
--- Create Window for GUI
+-- GUI Setup using OrionLib
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({
     Name = "Cayos Hub for Street Wars 2",
     HidePremium = false,
@@ -12,31 +10,219 @@ local Window = OrionLib:MakeWindow({
 -- Global Variables
 _G.autoMop = false
 _G.autoPickup = false
+_G.pickupRange = 5000000
 _G.onePunch = false
 _G.godMode = false
 _G.flying = false
 _G.speed = 50
+_G.noclip = false
 
--- Debugging function for output
-local function debugMessage(msg)
-    print("[DEBUG]: " .. msg)
-end
+-- ESP Tab (Outline everyone in green)
+local espTab = Window:MakeTab({
+    Name = "ESP",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
 
--- GodMode Function
-local function toggleGodMode()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
-    
-    if _G.godMode then
-        humanoid.Health = humanoid.MaxHealth
-        debugMessage("God Mode: Enabled")
-    else
-        debugMessage("God Mode: Disabled")
+espTab:AddToggle({
+    Name = "Outline Players",
+    Default = false,
+    Callback = function(state)
+        if state then
+            enableESP()
+        else
+            disableESP()
+        end
+    end
+})
+
+-- Function to enable ESP and outline all players in green
+local function enableESP()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player.Character then
+            local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                local outline = Instance.new("SelectionBox")
+                outline.Adornee = humanoidRootPart
+                outline.Color3 = Color3.fromRGB(0, 255, 0)  -- Green color for outline
+                outline.LineThickness = 0.05
+                outline.Parent = player.Character
+            end
+        end
     end
 end
 
--- One Punch Mode Function
+-- Function to disable ESP and remove all outlines
+local function disableESP()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        for _, child in pairs(player.Character:GetChildren()) do
+            if child:IsA("SelectionBox") then
+                child:Destroy()
+            end
+        end
+    end
+end
+
+-- Player Tab (Includes No Clip, Fly, Unfly, and Speed Slider)
+local playerTab = Window:MakeTab({
+    Name = "Player",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+playerTab:AddSlider({
+    Name = "Walk Speed",
+    Min = 16,
+    Max = 100,
+    Default = _G.speed,
+    Callback = function(value)
+        _G.speed = value
+        local player = game.Players.LocalPlayer
+        local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = _G.speed
+        end
+    end
+})
+
+playerTab:AddButton({
+    Name = "Fly",
+    Callback = function()
+        startFly()
+    end
+})
+
+playerTab:AddButton({
+    Name = "Unfly",
+    Callback = function()
+        stopFly()
+    end
+})
+
+playerTab:AddToggle({
+    Name = "No Clip",
+    Default = false,
+    Callback = function(state)
+        _G.noclip = state
+        if _G.noclip then
+            enableNoClip()
+        else
+            disableNoClip()
+        end
+    end
+})
+
+-- Functions for Fly, Unfly, and No Clip
+local function startFly()
+    _G.flying = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChild("Humanoid")
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(400000, 400000, 400000)
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.Parent = character:WaitForChild("HumanoidRootPart")
+    
+    local function flyingLoop()
+        if not _G.flying then
+            bodyVelocity:Destroy()
+        end
+        local velocity = Vector3.new(0, 0, 0)
+        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
+            velocity = Vector3.new(0, 50, 0)
+        end
+        bodyVelocity.Velocity = velocity
+    end
+    game:GetService("RunService").Heartbeat:Connect(flyingLoop)
+end
+
+local function stopFly()
+    _G.flying = false
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local bodyVelocity = character:FindFirstChildOfClass("BodyVelocity")
+    if bodyVelocity then
+        bodyVelocity:Destroy()
+    end
+end
+
+local function enableNoClip()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChild("Humanoid")
+    local parts = character:GetChildren()
+    
+    for _, part in pairs(parts) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+    
+    character.HumanoidRootPart.Anchored = true
+end
+
+local function disableNoClip()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChild("Humanoid")
+    local parts = character:GetChildren()
+    
+    for _, part in pairs(parts) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
+    end
+    
+    character.HumanoidRootPart.Anchored = false
+end
+
+-- Misc Tab (Includes God Mode, One Punch, etc.)
+local miscTab = Window:MakeTab({
+    Name = "Misc",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+miscTab:AddToggle({
+    Name = "God Mode",
+    Default = false,
+    Callback = function(state)
+        if state then
+            enableGodMode()
+        else
+            disableGodMode()
+        end
+    end
+})
+
+miscTab:AddToggle({
+    Name = "One Punch",
+    Default = false,
+    Callback = function(state)
+        _G.onePunch = state
+        enableOnePunch()
+    end
+})
+
+-- Functions (God Mode, One Punch, etc.)
+local function enableGodMode()
+    if _G.godMode then return end
+    _G.godMode = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChild("Humanoid")
+
+    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+        if _G.godMode and humanoid.Health < humanoid.MaxHealth then
+            humanoid.Health = humanoid.MaxHealth
+        end
+    end)
+end
+
+local function disableGodMode()
+    _G.godMode = false
+end
+
 local function enableOnePunch()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
@@ -48,71 +234,12 @@ local function enableOnePunch()
             local otherHumanoid = hit.Parent:FindFirstChild("Humanoid")
             if otherHumanoid then
                 otherHumanoid.Health = 0
-                debugMessage("One Punch: Killed " .. otherPlayer.Name)
             end
         end
     end)
 end
 
--- Fly Function
-local function startFly()
-    if _G.flying then return end
-    _G.flying = true
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-    local bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
-    local bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
-    bodyGyro.P = 9e4
-    bodyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
-    bodyGyro.CFrame = humanoidRootPart.CFrame
-    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-
-    debugMessage("Flying Enabled")
-    
-    while _G.flying do
-        bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-        bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * _G.speed
-        wait(0.1)
-    end
-
-    bodyGyro:Destroy()
-    bodyVelocity:Destroy()
-end
-
-local function stopFly()
-    _G.flying = false
-    debugMessage("Flying Disabled")
-end
-
--- Auto Pickup Function
-local function startAutoPickup()
-    _G.autoPickup = true
-    while _G.autoPickup do
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-
-        for _, item in pairs(workspace:GetChildren()) do
-            if item:IsA("Tool") and item.Name:lower():find("gun") then
-                local distance = (character.HumanoidRootPart.Position - item.Position).Magnitude
-                if distance <= 50 then  -- Pickup range
-                    firetouchinterest(character.HumanoidRootPart, item.Handle, 0)
-                    firetouchinterest(character.HumanoidRootPart, item.Handle, 1)
-                    debugMessage("Picked up item: " .. item.Name)
-                end
-            end
-        end
-        wait(0.1)
-    end
-end
-
-local function stopAutoPickup()
-    _G.autoPickup = false
-    debugMessage("Auto Pickup: Disabled")
-end
-
--- Teleport to Casino Example
+-- Teleports Tab (Add accurate teleport locations)
 local teleportTab = Window:MakeTab({
     Name = "Teleports",
     Icon = "rbxassetid://4483345998",
@@ -122,106 +249,50 @@ local teleportTab = Window:MakeTab({
 teleportTab:AddButton({
     Name = "Teleport to Casino",
     Callback = function()
-        -- Coordinates for the casino (example location, needs to be accurate)
-        local casinoPosition = Vector3.new(100, 50, 200)
-        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(casinoPosition))
-        debugMessage("Teleported to Casino")
+        local casinoPos = Vector3.new(1234, 10, -4321)  -- Replace with actual casino coordinates
+        local player = game.Players.LocalPlayer
+        player.Character:SetPrimaryPartCFrame(CFrame.new(casinoPos))
     end
 })
 
--- Useful Tab (Now with God Mode and One Punch)
-local usefulTab = Window:MakeTab({
-    Name = "Useful",
+-- Auto Farm Tab (Include autofarm functionalities)
+local autoFarmTab = Window:MakeTab({
+    Name = "Auto Farms",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-usefulTab:AddToggle({
-    Name = "God Mode",
-    Default = false,
-    Callback = function(state)
-        _G.godMode = state
-        toggleGodMode()
-    end
-})
-
-usefulTab:AddToggle({
-    Name = "One Punch Mode",
-    Default = false,
-    Callback = function(state)
-        _G.onePunch = state
-        if _G.onePunch then
-            enableOnePunch()
-        else
-            debugMessage("One Punch: Disabled")
-        end
-    end
-})
-
-usefulTab:AddButton({
-    Name = "Fly",
-    Callback = function()
-        startFly()
-    end
-})
-
-usefulTab:AddButton({
-    Name = "Stop Fly",
-    Callback = function()
-        stopFly()
-    end
-})
-
--- Trolling Tab (Kill Player and Kill All)
-local trollingTab = Window:MakeTab({
-    Name = "Trolling",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
--- Kill Player
-local playerList = {}  -- Table to hold players in the server
-for _, player in pairs(game.Players:GetPlayers()) do
-    table.insert(playerList, player.Name)
-end
-
-trollingTab:AddDropdown({
-    Name = "Kill Player",
-    Options = playerList,
-    Callback = function(playerName)
-        local playerToKill = game.Players:FindFirstChild(playerName)
-        if playerToKill and playerToKill.Character then
-            local humanoid = playerToKill.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.Health = 0
-                debugMessage("Killed " .. playerName)
-            end
-        end
-    end
-})
-
--- Kill All Toggle
-trollingTab:AddToggle({
-    Name = "Kill All Players",
+autoFarmTab:AddToggle({
+    Name = "Auto Mop Farm",
     Default = false,
     Callback = function(state)
         if state then
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player.Character then
-                    local humanoid = player.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.Health = 0
-                        debugMessage("Killed " .. player.Name)
-                    end
-                end
-            end
+            startAutoMopFarm()
         else
-            debugMessage("Kill All: Disabled")
+            stopAutoMopFarm()
         end
     end
 })
 
--- Credits Tab
+-- Functions for Auto Mop Farming
+local function startAutoMopFarm()
+    _G.autoMop = true
+    while _G.autoMop do
+        local mop = workspace:FindFirstChild("Mop")
+        local cashRegister = workspace:FindFirstChild("CashRegister")
+        if mop and cashRegister then
+            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mop, 0)
+            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, cashRegister, 1)
+        end
+        task.wait(0.1)
+    end
+end
+
+local function stopAutoMopFarm()
+    _G.autoMop = false
+end
+
+-- Credits Tab (Add Discord Link)
 local creditsTab = Window:MakeTab({
     Name = "Credits",
     Icon = "rbxassetid://4483345998",
@@ -230,5 +301,5 @@ local creditsTab = Window:MakeTab({
 
 creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: https://discord.gg/yuJB7MkF")
 
--- Final Debug Log
-debugMessage("Script Loaded and Ready.")
+-- Initialize GUI
+OrionLib:Init()
