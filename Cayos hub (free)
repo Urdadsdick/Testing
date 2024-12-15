@@ -10,7 +10,6 @@ local Window = OrionLib:MakeWindow({
 -- Global Variables
 _G.autoMop = false
 _G.autoPickup = false
-_G.pickupRange = 5000000
 _G.onePunch = false
 _G.godMode = false
 _G.flying = false
@@ -238,68 +237,6 @@ local function enableOnePunch()
         end
     end)
 end
-
--- Teleports Tab (Add accurate teleport locations)
-local teleportTab = Window:MakeTab({
-    Name = "Teleports",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-teleportTab:AddButton({
-    Name = "Teleport to Casino",
-    Callback = function()
-        local casinoPos = Vector3.new(1234, 10, -4321)  -- Replace with actual casino coordinates
-        local player = game.Players.LocalPlayer
-        player.Character:SetPrimaryPartCFrame(CFrame.new(casinoPos))
-    end
-})
-
--- Auto Farm Tab (Include autofarm functionalities)
-local autoFarmTab = Window:MakeTab({
-    Name = "Auto Farms",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-autoFarmTab:AddToggle({
-    Name = "Auto Mop Farm",
-    Default = false,
-    Callback = function(state)
-        if state then
-            startAutoMopFarm()
-        else
-            stopAutoMopFarm()
-        end
-    end
-})
-
--- Functions for Auto Mop Farming
-local function startAutoMopFarm()
-    _G.autoMop = true
-    while _G.autoMop do
-        local mop = workspace:FindFirstChild("Mop")
-        local cashRegister = workspace:FindFirstChild("CashRegister")
-        if mop and cashRegister then
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mop, 0)
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, cashRegister, 1)
-        end
-        task.wait(0.1)
-    end
-end
-
-local function stopAutoMopFarm()
-    _G.autoMop = false
-end
-
--- Credits Tab (Add Discord Link)
-local creditsTab = Window:MakeTab({
-    Name = "Credits",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-creditsTab:AddParagraph("Credits", "Script by Cayos.\nUI Framework by OrionLib.\nDiscord: https://discord.gg/yuJB7MkF")
 
 -- Initialize GUI
 OrionLib:Init()
