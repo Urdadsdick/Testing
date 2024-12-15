@@ -196,6 +196,49 @@ if game.PlaceId == 11177482306 then
         end
     })
 
+    -- Creds Tab
+    local credsTab = Window:MakeTab({
+        Name = "Creds",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    credsTab:AddLabel("Developed by: Your Name")
+    credsTab:AddLabel("Script by: Your Name")
+    credsTab:AddLabel("Special Thanks to: Community and Supporters")
+
+    -- Misc Tab
+    local miscTab = Window:MakeTab({
+        Name = "Misc",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    miscTab:AddButton({
+        Name = "Reset Player",
+        Callback = function()
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            character:BreakJoints() -- Resets the player
+        end
+    })
+
+    -- Other Tab
+    local otherTab = Window:MakeTab({
+        Name = "Other",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    otherTab:AddButton({
+        Name = "Print Player's Info",
+        Callback = function()
+            local player = game.Players.LocalPlayer
+            print("Player Name: " .. player.Name)
+            print("Player User ID: " .. player.UserId)
+        end
+    })
+
     -- Initialize GUI
     OrionLib:Init()
 end
