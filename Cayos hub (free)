@@ -15,49 +15,6 @@ _G.godMode = false
 _G.flying = false
 _G.speed = 50
 _G.noclip = false
-_G.antiRagdoll = false
-
--- Anti Tab (Includes Anti Ragdoll)
-local antiTab = Window:MakeTab({
-    Name = "Anti",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-antiTab:AddToggle({
-    Name = "Anti Ragdoll",
-    Default = false,
-    Callback = function(state)
-        _G.antiRagdoll = state
-        if _G.antiRagdoll then
-            enableAntiRagdoll()
-        else
-            disableAntiRagdoll()
-        end
-    end
-})
-
--- Function to enable Anti Ragdoll (prevents player from ragdolling)
-local function enableAntiRagdoll()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-    
-    if humanoid then
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)  -- Disable ragdoll physics
-    end
-end
-
--- Function to disable Anti Ragdoll (restores ragdoll behavior)
-local function disableAntiRagdoll()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChild("Humanoid")
-    
-    if humanoid then
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)  -- Enable ragdoll physics
-    end
-end
 
 -- Player Tab (Includes No Clip, Fly, Unfly, and Speed Slider)
 local playerTab = Window:MakeTab({
