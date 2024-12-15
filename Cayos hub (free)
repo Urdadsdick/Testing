@@ -21,7 +21,6 @@ if game.PlaceId == 11177482306 then
     _G.godMode = false
     _G.flying = false
     _G.speed = 50
-    _G.noclip = false
 
     -- Function: Fly
     local function startFly()
@@ -149,36 +148,111 @@ if game.PlaceId == 11177482306 then
         end
     end
 
+    -- Add Debugging for Accurate Locations
+    teleportTab:AddButton({
+        Name = "Get Current Coordinates",
+        Callback = function()
+            local player = game.Players.LocalPlayer
+            local pos = player.Character.HumanoidRootPart.Position
+            print("Your current position is: ", pos)
+        end
+    })
+
     -- Teleport Buttons
     teleportTab:AddButton({
         Name = "Casino",
         Callback = function()
-            teleportTo(CFrame.new(100, 50, -300)) -- Replace these coordinates with actual casino location
+            teleportTo(CFrame.new(100, 50, -300)) -- Replace with accurate Casino coordinates
         end
     })
 
     teleportTab:AddButton({
         Name = "Spawn Point",
         Callback = function()
-            teleportTo(CFrame.new(0, 10, 0)) -- Replace with actual spawn coordinates
+            teleportTo(CFrame.new(0, 10, 0)) -- Replace with Spawn coordinates
         end
     })
 
     teleportTab:AddButton({
         Name = "Weapon Store",
         Callback = function()
-            teleportTo(CFrame.new(50, 10, 100)) -- Replace with weapon store coordinates
+            teleportTo(CFrame.new(50, 10, 100)) -- Replace with Weapon Store coordinates
         end
     })
 
     teleportTab:AddButton({
         Name = "Safe Zone",
         Callback = function()
-            teleportTo(CFrame.new(-200, 10, -150)) -- Replace with safe zone coordinates
+            teleportTo(CFrame.new(-200, 10, -150)) -- Replace with Safe Zone coordinates
         end
     })
 
-    -- Other tabs (Player, Useful, Misc, Credits) remain unchanged
+    -- Player Tab
+    local playerTab = Window:MakeTab({
+        Name = "Player",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    playerTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Default = _G.speed,
+        Callback = function(value)
+            _G.speed = value
+            local player = game.Players.LocalPlayer
+            local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = _G.speed
+            end
+        end
+    })
+
+    playerTab:AddButton({
+        Name = "Fly",
+        Callback = function()
+            startFly()
+        end
+    })
+
+    playerTab:AddButton({
+        Name = "Unfly",
+        Callback = function()
+            stopFly()
+        end
+    })
+
+    -- Miscellaneous Tab
+    local miscTab = Window:MakeTab({
+        Name = "Misc",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    miscTab:AddToggle({
+        Name = "Auto Mop Farm",
+        Default = false,
+        Callback = function(state)
+            if state then
+                startAutoMopFarm()
+            else
+                stopAutoMopFarm()
+            end
+        end
+    })
+
+    miscTab:AddToggle({
+        Name = "Enable God Mode",
+        Default = false,
+        Callback = function(state)
+            if state then
+                enableGodMode()
+            else
+                disableGodMode()
+            end
+        end
+    })
 
     -- Credits Tab
     local creditsTab = Window:MakeTab({
