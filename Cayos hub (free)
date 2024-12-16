@@ -1,45 +1,25 @@
 if game.PlaceId == 11177482306 then
-    -- Display Intro Message
-    print("Goated Hub for Street Wars 2")
-
     -- Load Orion UI
-    local success, OrionLib = pcall(function()
-        return loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source.lua'))()
-    end)
+    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
-    if not success or not OrionLib then
-        warn("Failed to load Orion UI library.")
-        return
-    end
-
-    -- Create Orion Window
+    -- Create Main Window
     local Window = OrionLib:MakeWindow({
-        Name = "Goated Hub for Street Wars 2",
+        Name = "Goated Hub - Street Wars 2",
         HidePremium = false,
         SaveConfig = true,
-        ConfigFolder = "GoatedHubConfig"
+        ConfigFolder = "GoatedHub"
     })
 
-    -- Global Variables
-    _G.autoMop = false
-    _G.autoPickup = false
-    _G.pickupRange = 5000000
-    _G.onePunch = false
-    _G.godMode = false
-    _G.flying = false
-    _G.speed = 50
-    _G.noclip = false
+    -- Initialize Variables
+    local _G = {
+        autoFarm = false,
+        autoPickup = false,
+        godMode = false,
+        espEnabled = false,
+        walkSpeed = 16,
+        infiniteAmmo = false
+    }
 
-    -- Placeholder Fly Functions
-    local function startFly()
-        print("Fly started")
-    end
-
-    local function stopFly()
-        print("Fly stopped")
-    end
-
-    -- Tabs
     -- Player Tab
     local playerTab = Window:MakeTab({
         Name = "Player",
@@ -47,32 +27,129 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
+    -- Walk Speed Slider
     playerTab:AddSlider({
         Name = "Walk Speed",
         Min = 16,
         Max = 100,
-        Default = _G.speed,
+        Default = 16,
+        Increment = 1,
         Callback = function(value)
-            _G.speed = value
-            local player = game.Players.LocalPlayer
-            local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = _G.speed
+            _G.walkSpeed = value
+            if game.Players.LocalPlayer.Character then
+                local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = value
+                end
             end
         end
     })
 
-    playerTab:AddButton({
-        Name = "Fly",
-        Callback = function()
-            startFly()
+    -- God Mode Toggle
+    playerTab:AddToggle({
+        Name = "God Mode",
+        Default = false,
+        Callback = function(state)
+            _G.godMode = state
+            if state then
+                local player = game.Players.LocalPlayer
+                if player.Character then
+                    local humanoid = player.Character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.MaxHealth = math.huge
+                        humanoid.Health = math.huge
+                    end
+                end
+            end
         end
     })
 
-    playerTab:AddButton({
-        Name = "Unfly",
-        Callback = function()
-            stopFly()
+    -- Farming Tab
+    local farmingTab = Window:MakeTab({
+        Name = "Farming",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Auto Farm Toggle
+    farmingTab:AddToggle({
+        Name = "Auto Farm",
+        Default = false,
+        Callback = function(state)
+            _G.autoFarm = state
+            while _G.autoFarm do
+                -- Farming Logic
+                wait(0.1)
+            end
+        end
+    })
+
+    -- Auto Pickup Toggle
+    farmingTab:AddToggle({
+        Name = "Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            _G.autoPickup = state
+            while _G.autoPickup do
+                for _, item in pairs(game.Workspace:GetChildren()) do
+                    if item:IsA("Tool") or item.Name == "Cash" then
+                        item.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                    end
+                end
+                wait(0.5)
+            end
+        end
+    })
+
+    -- ESP Tab
+    local espTab = Window:MakeTab({
+        Name = "ESP",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- ESP Toggle
+    espTab:AddToggle({
+        Name = "Enable ESP",
+        Default = false,
+        Callback = function(state)
+            _G.espEnabled = state
+            while _G.espEnabled do
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                        highlight.FillColor = Color3.new(0, 1, 0)
+                        highlight.OutlineColor = Color3.new(1, 1, 1)
+                    end
+                end
+                wait(0.5)
+            end
+        end
+    })
+
+    -- Combat Tab
+    local combatTab = Window:MakeTab({
+        Name = "Combat",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Infinite Ammo Toggle
+    combatTab:AddToggle({
+        Name = "Infinite Ammo",
+        Default = false,
+        Callback = function(state)
+            _G.infiniteAmmo = state
+            if state then
+                while _G.infiniteAmmo do
+                    for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                        if tool:FindFirstChild("Ammo") then
+                            tool.Ammo.Value = math.huge
+                        end
+                    end
+                    wait(0.1)
+                end
+            end
         end
     })
 
@@ -86,36 +163,11 @@ if game.PlaceId == 11177482306 then
     teleportsTab:AddButton({
         Name = "Teleport to Wheel",
         Callback = function()
-            local wheelPosition = Vector3.new(0, 10, 0) -- Replace with actual position
-            local character = game.Players.LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                character.HumanoidRootPart.CFrame = CFrame.new(wheelPosition)
-            end
+            local wheelPosition = Vector3.new(0, 10, 0) -- Update this with the correct coordinates
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(wheelPosition)
         end
     })
 
-    -- Script Tab
-    local scriptTab = Window:MakeTab({
-        Name = "Script",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    scriptTab:AddToggle({
-        Name = "Infinite Yield",
-        Default = false,
-        Callback = function(enabled)
-            if enabled then
-                local success, errorMessage = pcall(function()
-                    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-                end)
-                if not success then
-                    warn("Failed to load Infinite Yield: " .. tostring(errorMessage))
-                end
-            end
-        end
-    })
-
-    -- Finalize UI
+    -- Finish UI Setup
     OrionLib:Init()
 end
