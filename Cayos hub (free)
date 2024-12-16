@@ -60,6 +60,15 @@ if game.PlaceId == 11177482306 then
                         humanoid.Health = math.huge
                     end
                 end
+            else
+                local player = game.Players.LocalPlayer
+                if player.Character then
+                    local humanoid = player.Character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.MaxHealth = 100
+                        humanoid.Health = 100
+                    end
+                end
             end
         end
     })
