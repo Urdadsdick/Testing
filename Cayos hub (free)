@@ -12,13 +12,12 @@ if game.PlaceId == 11177482306 then
 
     -- Initialize Variables
     local _G = {
+        godMode = false,
         autoFarm = false,
         autoPickup = false,
-        godMode = false,
         espEnabled = false,
         walkSpeed = 16,
-        infiniteAmmo = false,
-        onePunch = false
+        infiniteAmmo = false
     }
 
     -- Player Tab
@@ -46,7 +45,7 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- God Mode Toggle
+    -- Godmode Toggle
     playerTab:AddToggle({
         Name = "God Mode",
         Default = false,
@@ -54,11 +53,17 @@ if game.PlaceId == 11177482306 then
             _G.godMode = state
             while _G.godMode do
                 local player = game.Players.LocalPlayer
-                local character = player.Character or player.CharacterAdded:Wait()
-                local humanoid = character:FindFirstChild("Humanoid")
-                if humanoid then
-                    humanoid.MaxHealth = math.huge
-                    humanoid.Health = math.huge
+                local character = player.Character
+                if character then
+                    local humanoid = character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.MaxHealth = math.huge
+                        humanoid.Health = math.huge
+                    else
+                        local newHumanoid = Instance.new("Humanoid")
+                        newHumanoid.Parent = character
+                        character:WaitForChild("Humanoid")
+                    end
                 end
                 wait(0.1)
             end
@@ -79,8 +84,15 @@ if game.PlaceId == 11177482306 then
         Callback = function(state)
             _G.autoFarm = state
             while _G.autoFarm do
-                -- Replace with specific farming logic for Street Wars 2
-                wait(0.1)
+                -- Farming Logic
+                for _, spot in pairs(game.Workspace:GetDescendants()) do
+                    if spot.Name == "Dirt" and spot:IsA("BasePart") then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = spot.CFrame
+                        fireproximityprompt(spot:FindFirstChildOfClass("ProximityPrompt"))
+                        wait(0.2)
+                    end
+                end
+                wait(1)
             end
         end
     })
@@ -154,46 +166,15 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Trolling Tab
-    local trollingTab = Window:MakeTab({
-        Name = "Trolling",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- One Punch Toggle
-    trollingTab:AddToggle({
-        Name = "One Punch",
-        Default = false,
-        Callback = function(state)
-            _G.onePunch = state
-            if _G.onePunch then
-                local player = game.Players.LocalPlayer
-                local character = player.Character or player.CharacterAdded:Wait()
-                local rootPart = character:WaitForChild("HumanoidRootPart")
-
-                -- Detect collision and set health to 0
-                rootPart.Touched:Connect(function(hit)
-                    if _G.onePunch and hit.Parent and hit.Parent:FindFirstChild("Humanoid") then
-                        local humanoid = hit.Parent:FindFirstChild("Humanoid")
-                        if humanoid and hit.Parent ~= character then
-                            humanoid.Health = 0
-                        end
-                    end
-                end)
-            end
-        end
-    })
-
-    -- Credit Tab
-    local creditTab = Window:MakeTab({
+    -- Credits Tab
+    local creditsTab = Window:MakeTab({
         Name = "Credits",
         Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
-    creditTab:AddParagraph("Credits", "Development by yooo0684 on DC")
+    creditsTab:AddLabel("Development by yooo0684 on Discord")
 
-    -- Finish UI Setup
+    -- Initialize UI
     OrionLib:Init()
 end
