@@ -17,7 +17,8 @@ if game.PlaceId == 11177482306 then
         autoPickup = false,
         espEnabled = false,
         walkSpeed = 16,
-        infiniteAmmo = false
+        infiniteAmmo = false,
+        onePunch = false
     }
 
     -- Player Tab
@@ -41,6 +42,27 @@ if game.PlaceId == 11177482306 then
                 if humanoid then
                     humanoid.WalkSpeed = value
                 end
+            end
+        end
+    })
+
+    -- Walk Speed Text Box for Mobile
+    playerTab:AddTextbox({
+        Name = "Set Walk Speed",
+        Default = "16",
+        TextDisappear = true,
+        Callback = function(text)
+            local speed = tonumber(text)
+            if speed and speed >= 16 and speed <= 100 then
+                _G.walkSpeed = speed
+                if game.Players.LocalPlayer.Character then
+                    local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.WalkSpeed = speed
+                    end
+                end
+            else
+                warn("Invalid speed value. Please enter a number between 16 and 100.")
             end
         end
     })
@@ -84,7 +106,6 @@ if game.PlaceId == 11177482306 then
         Callback = function(state)
             _G.autoFarm = state
             while _G.autoFarm do
-                -- Farming Logic
                 for _, spot in pairs(game.Workspace:GetDescendants()) do
                     if spot.Name == "Dirt" and spot:IsA("BasePart") then
                         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = spot.CFrame
@@ -162,6 +183,37 @@ if game.PlaceId == 11177482306 then
                     end
                     wait(0.1)
                 end
+            end
+        end
+    })
+
+    -- Trolling Tab
+    local trollingTab = Window:MakeTab({
+        Name = "Trolling",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- One Punch Toggle
+    trollingTab:AddToggle({
+        Name = "One Punch",
+        Default = false,
+        Callback = function(state)
+            _G.onePunch = state
+            while _G.onePunch do
+                local player = game.Players.LocalPlayer
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local rootPart = player.Character.HumanoidRootPart
+                    for _, target in pairs(game.Players:GetPlayers()) do
+                        if target ~= player and target.Character and target.Character:FindFirstChild("Humanoid") then
+                            local distance = (rootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
+                            if distance < 5 then
+                                target.Character.Humanoid.Health = 0
+                            end
+                        end
+                    end
+                end
+                wait(0.1)
             end
         end
     })
