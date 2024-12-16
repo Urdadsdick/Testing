@@ -45,6 +45,27 @@ if game.PlaceId == 11177482306 then
         end
     })
 
+    -- Walk Speed Input Box (For mobile users)
+    playerTab:AddTextbox({
+        Name = "Set Walk Speed",
+        Default = "16",
+        TextDisappear = true,
+        Callback = function(value)
+            local speed = tonumber(value)
+            if speed and speed >= 16 and speed <= 100 then
+                _G.walkSpeed = speed
+                if game.Players.LocalPlayer.Character then
+                    local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.WalkSpeed = speed
+                    end
+                end
+            else
+                print("Please enter a valid speed between 16 and 100.")
+            end
+        end
+    })
+
     -- God Mode Toggle
     playerTab:AddToggle({
         Name = "God Mode",
@@ -180,20 +201,15 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Teleports Tab
-    local teleportsTab = Window:MakeTab({
-        Name = "Teleports",
+    -- Credits Tab
+    local creditsTab = Window:MakeTab({
+        Name = "Credits",
         Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
-    teleportsTab:AddButton({
-        Name = "Teleport to Wheel",
-        Callback = function()
-            local wheelPosition = Vector3.new(0, 10, 0) -- Update this with the correct coordinates
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(wheelPosition)
-        end
-    })
+    -- Display Credit Text
+    creditsTab:AddLabel("Development by yooo0684 on Discord")
 
     -- Finish UI Setup
     OrionLib:Init()
