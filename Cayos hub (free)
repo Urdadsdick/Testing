@@ -45,27 +45,6 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Walk Speed Input Box (For mobile users)
-    playerTab:AddTextbox({
-        Name = "Set Walk Speed",
-        Default = "16",
-        TextDisappear = true,
-        Callback = function(value)
-            local speed = tonumber(value)
-            if speed and speed >= 16 and speed <= 100 then
-                _G.walkSpeed = speed
-                if game.Players.LocalPlayer.Character then
-                    local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.WalkSpeed = speed
-                    end
-                end
-            else
-                print("Please enter a valid speed between 16 and 100.")
-            end
-        end
-    })
-
     -- God Mode Toggle
     playerTab:AddToggle({
         Name = "God Mode",
@@ -79,15 +58,6 @@ if game.PlaceId == 11177482306 then
                     if humanoid then
                         humanoid.MaxHealth = math.huge
                         humanoid.Health = math.huge
-                    end
-                end
-            else
-                local player = game.Players.LocalPlayer
-                if player.Character then
-                    local humanoid = player.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.MaxHealth = 100
-                        humanoid.Health = 100
                     end
                 end
             end
@@ -108,26 +78,25 @@ if game.PlaceId == 11177482306 then
         Callback = function(state)
             _G.autoFarm = state
             while _G.autoFarm do
-                -- Farming Logic: Interact with Paki Grocer and Mop Spots
-                local character = game.Players.LocalPlayer.Character
-                local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
-                local tool = game.Players.LocalPlayer.Backpack:FindFirstChild("Mop")
-
-                if humanoidRootPart and tool then
-                    -- Equip the Mop
-                    tool.Parent = game.Players.LocalPlayer.Character
-
-                    -- Find Cleaning Spots
-                    for _, spot in pairs(workspace:GetChildren()) do
-                        if spot.Name == "CleaningSpot" then
-                            humanoidRootPart.CFrame = spot.CFrame
-                            wait(0.5) -- Simulate interaction time
-                            fireproximityprompt(spot:FindFirstChild("ProximityPrompt")) -- Activate the cleaning
+                -- Add the Auto Farm Functionality Here
+                -- For example: Automatically interact with "Paki Grocer" or mop floor spots
+                -- Replace the code below with specific actions required for your game
+                local player = game.Players.LocalPlayer
+                local pakiGrocer = workspace:FindFirstChild("Paki Grocer")  -- You may need to adjust this path
+                if pakiGrocer then
+                    -- Automate actions like using the mop to clean floor spots
+                    local mopTool = player.Backpack:FindFirstChild("Mop")
+                    if mopTool then
+                        -- Example of automating mop usage at certain spots
+                        local floorSpot = workspace:FindFirstChild("FloorSpot")  -- Adjust this to find the actual mop spots
+                        if floorSpot then
+                            -- Simulate cleaning floor
+                            mopTool:Activate()
+                            wait(0.5)  -- Adjust wait time based on the game mechanics
                         end
                     end
                 end
-
-                wait(0.1)
+                wait(0.1)  -- Adjust wait time for farming intervals
             end
         end
     })
@@ -201,15 +170,23 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Credits Tab
-    local creditsTab = Window:MakeTab({
-        Name = "Credits",
+    -- Script Tab
+    local scriptTab = Window:MakeTab({
+        Name = "Scripts",
         Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
-    -- Display Credit Text
-    creditsTab:AddLabel("Development by yooo0684 on Discord")
+    -- Infinite Yield Toggle
+    scriptTab:AddToggle({
+        Name = "Infinite Yield",
+        Default = false,
+        Callback = function(state)
+            if state then
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+            end
+        end
+    })
 
     -- Finish UI Setup
     OrionLib:Init()
