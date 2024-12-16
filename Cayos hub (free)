@@ -1,110 +1,191 @@
 if game.PlaceId == 11177482306 then
-    -- Debug Message
-    print("Goated Hub for Street Wars 2 is loading...")
+    -- Load Orion UI
+    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
-    -- Load Orion UI Library
-    local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-
-    -- Create Orion Window
+    -- Create Main Window
     local Window = OrionLib:MakeWindow({
-        Name = "Goated Hub for Street Wars 2",
+        Name = "Goated Hub - Street Wars 2",
         HidePremium = false,
         SaveConfig = true,
-        ConfigFolder = "GoatedHubConfig"
+        ConfigFolder = "GoatedHub"
     })
 
-    -- Initialize Global Variables
-    _G.autoMop = false
-    _G.speed = 50
-    _G.flying = false
-    _G.noclip = false
-
-    -- Debug Tab Initialization
-    print("Initializing Player Tab...")
+    -- Initialize Variables
+    local _G = {
+        autoFarm = false,
+        autoPickup = false,
+        godMode = false,
+        espEnabled = false,
+        walkSpeed = 16,
+        infiniteAmmo = false
+    }
 
     -- Player Tab
-    local playerTab = Window:MakeTab({Name = "Player", Icon = "rbxassetid://4483345998"})
+    local playerTab = Window:MakeTab({
+        Name = "Player",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
 
+    -- Walk Speed Slider
     playerTab:AddSlider({
         Name = "Walk Speed",
         Min = 16,
         Max = 100,
-        Default = _G.speed,
+        Default = 16,
+        Increment = 1,
         Callback = function(value)
-            _G.speed = value
-            local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = _G.speed
+            _G.walkSpeed = value
+            if game.Players.LocalPlayer.Character then
+                local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = value
+                end
             end
         end
     })
 
-    playerTab:AddButton({
-        Name = "Fly",
-        Callback = function()
-            print("Fly enabled (implement flying script)")
+    -- God Mode Toggle
+    playerTab:AddToggle({
+        Name = "God Mode",
+        Default = false,
+        Callback = function(state)
+            _G.godMode = state
+            if state then
+                local player = game.Players.LocalPlayer
+                if player.Character then
+                    local humanoid = player.Character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.MaxHealth = math.huge
+                        humanoid.Health = math.huge
+                    end
+                end
+            end
         end
     })
 
-    playerTab:AddButton({
-        Name = "Unfly",
-        Callback = function()
-            print("Fly disabled (implement flying script)")
+    -- Farming Tab
+    local farmingTab = Window:MakeTab({
+        Name = "Farming",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Auto Farm Toggle
+    farmingTab:AddToggle({
+        Name = "Auto Farm",
+        Default = false,
+        Callback = function(state)
+            _G.autoFarm = state
+            while _G.autoFarm do
+                -- Farming Logic: Interact with Paki Grocer and Mop Spots
+                local character = game.Players.LocalPlayer.Character
+                local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+                local tool = game.Players.LocalPlayer.Backpack:FindFirstChild("Mop")
+
+                if humanoidRootPart and tool then
+                    -- Equip the Mop
+                    tool.Parent = game.Players.LocalPlayer.Character
+
+                    -- Find Cleaning Spots
+                    for _, spot in pairs(workspace:GetChildren()) do
+                        if spot.Name == "CleaningSpot" then
+                            humanoidRootPart.CFrame = spot.CFrame
+                            wait(0.5) -- Simulate interaction time
+                            fireproximityprompt(spot:FindFirstChild("ProximityPrompt")) -- Activate the cleaning
+                        end
+                    end
+                end
+
+                wait(0.1)
+            end
         end
     })
 
-    -- Debug Teleports Tab
-    print("Initializing Teleports Tab...")
+    -- Auto Pickup Toggle
+    farmingTab:AddToggle({
+        Name = "Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            _G.autoPickup = state
+            while _G.autoPickup do
+                for _, item in pairs(game.Workspace:GetChildren()) do
+                    if item:IsA("Tool") or item.Name == "Cash" then
+                        item.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                    end
+                end
+                wait(0.5)
+            end
+        end
+    })
+
+    -- ESP Tab
+    local espTab = Window:MakeTab({
+        Name = "ESP",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- ESP Toggle
+    espTab:AddToggle({
+        Name = "Enable ESP",
+        Default = false,
+        Callback = function(state)
+            _G.espEnabled = state
+            while _G.espEnabled do
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                        highlight.FillColor = Color3.new(0, 1, 0)
+                        highlight.OutlineColor = Color3.new(1, 1, 1)
+                    end
+                end
+                wait(0.5)
+            end
+        end
+    })
+
+    -- Combat Tab
+    local combatTab = Window:MakeTab({
+        Name = "Combat",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Infinite Ammo Toggle
+    combatTab:AddToggle({
+        Name = "Infinite Ammo",
+        Default = false,
+        Callback = function(state)
+            _G.infiniteAmmo = state
+            if state then
+                while _G.infiniteAmmo do
+                    for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                        if tool:FindFirstChild("Ammo") then
+                            tool.Ammo.Value = math.huge
+                        end
+                    end
+                    wait(0.1)
+                end
+            end
+        end
+    })
 
     -- Teleports Tab
-    local teleportsTab = Window:MakeTab({Name = "Teleports", Icon = "rbxassetid://4483345998"})
+    local teleportsTab = Window:MakeTab({
+        Name = "Teleports",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
 
     teleportsTab:AddButton({
         Name = "Teleport to Wheel",
         Callback = function()
-            local wheelPosition = Vector3.new(0, 10, 0) -- Adjust coordinates to wheel location
+            local wheelPosition = Vector3.new(0, 10, 0) -- Update this with the correct coordinates
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(wheelPosition)
         end
     })
 
-    -- Debug Autofarm Tab
-    print("Initializing Autofarm Tab...")
-
-    -- Autofarm Tab
-    local autoTab = Window:MakeTab({Name = "Autofarm", Icon = "rbxassetid://4483345998"})
-
-    autoTab:AddToggle({
-        Name = "Auto Mop Clean",
-        Default = false,
-        Callback = function(value)
-            _G.autoMop = value
-            if value then
-                print("Auto Mop Enabled")
-            else
-                print("Auto Mop Disabled")
-            end
-        end
-    })
-
-    -- Debug Infinite Yield Tab
-    print("Initializing Script Tab...")
-
-    -- Script Tab
-    local scriptTab = Window:MakeTab({Name = "Script", Icon = "rbxassetid://4483345998"})
-
-    scriptTab:AddToggle({
-        Name = "Infinite Yield",
-        Default = false,
-        Callback = function(enabled)
-            if enabled then
-                -- Execute Infinite Yield when toggled on
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-                print("Infinite Yield Executed")
-            end
-        end
-    })
-
-    -- Initialize Orion UI
-    print("Goated Hub initialized!")
+    -- Finish UI Setup
     OrionLib:Init()
 end
