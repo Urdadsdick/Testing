@@ -3,7 +3,14 @@ if game.PlaceId == 11177482306 then
     print("Goated Hub for Street Wars 2")
 
     -- Load Orion UI
-    local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source.lua'))()
+    local success, OrionLib = pcall(function()
+        return loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source.lua'))()
+    end)
+
+    if not success or not OrionLib then
+        warn("Failed to load Orion UI library.")
+        return
+    end
 
     -- Create Orion Window
     local Window = OrionLib:MakeWindow({
@@ -13,7 +20,7 @@ if game.PlaceId == 11177482306 then
         ConfigFolder = "GoatedHubConfig"
     })
 
-    -- Initialize Global Variables
+    -- Global Variables
     _G.autoMop = false
     _G.autoPickup = false
     _G.pickupRange = 5000000
@@ -23,36 +30,23 @@ if game.PlaceId == 11177482306 then
     _G.speed = 50
     _G.noclip = false
 
-    -- Function to Kill All Players except Local Player
-    local function killAllPlayers()
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= game.Players.LocalPlayer and player.Character then
-                local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid then
-                    humanoid.Health = 0
-                end
-            end
-        end
+    -- Placeholder Fly Functions
+    local function startFly()
+        print("Fly started")
     end
 
-    -- Function to Kill a Specific Player
-    local function killPlayer(playerToKill)
-        if playerToKill.Character then
-            local humanoid = playerToKill.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.Health = 0
-            end
-        end
+    local function stopFly()
+        print("Fly stopped")
     end
 
+    -- Tabs
     -- Player Tab
     local playerTab = Window:MakeTab({
         Name = "Player",
-        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
+        Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
-    
-    -- Walk Speed Slider
+
     playerTab:AddSlider({
         Name = "Walk Speed",
         Min = 16,
@@ -68,7 +62,6 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Fly/Unfly Buttons
     playerTab:AddButton({
         Name = "Fly",
         Callback = function()
@@ -86,68 +79,43 @@ if game.PlaceId == 11177482306 then
     -- Teleports Tab
     local teleportsTab = Window:MakeTab({
         Name = "Teleports",
-        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
+        Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
     teleportsTab:AddButton({
         Name = "Teleport to Wheel",
         Callback = function()
-            local wheelPosition = Vector3.new(0, 10, 0) -- Change this to actual wheel location
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(wheelPosition)
-        end
-    })
-
-    -- Troll Tab
-    local trollTab = Window:MakeTab({
-        Name = "Troll",
-        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
-        PremiumOnly = false
-    })
-
-    -- Kill All Players Button
-    trollTab:AddButton({
-        Name = "Kill All Players",
-        Callback = function()
-            killAllPlayers()
-        end
-    })
-
-    -- Kill Player Dropdown (List of Players in Server)
-    local playersList = {}
-    for _, player in pairs(game.Players:GetPlayers()) do
-        table.insert(playersList, player.Name)
-    end
-
-    trollTab:AddDropdown({
-        Name = "Kill Player",
-        Options = playersList,
-        Callback = function(selectedPlayer)
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player.Name == selectedPlayer then
-                    killPlayer(player)
-                    break
-                end
+            local wheelPosition = Vector3.new(0, 10, 0) -- Replace with actual position
+            local character = game.Players.LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = CFrame.new(wheelPosition)
             end
         end
     })
 
-    -- Script Tab with Infinite Yield Toggle
+    -- Script Tab
     local scriptTab = Window:MakeTab({
         Name = "Script",
-        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
+        Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
-    -- Toggle for Infinite Yield
     scriptTab:AddToggle({
         Name = "Infinite Yield",
         Default = false,
         Callback = function(enabled)
             if enabled then
-                -- Execute Infinite Yield when toggled on
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+                local success, errorMessage = pcall(function()
+                    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+                end)
+                if not success then
+                    warn("Failed to load Infinite Yield: " .. tostring(errorMessage))
+                end
             end
         end
     })
+
+    -- Finalize UI
+    OrionLib:Init()
 end
