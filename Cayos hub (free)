@@ -2,12 +2,12 @@ if game.PlaceId == 11177482306 then
     -- Display Intro Message
     print("Goated Hub for Street Wars 2")
 
-    -- Load Vape Hub UI
-    local VapeHub = loadstring(game:HttpGet('https://raw.githubusercontent.com/THE-HUB-TOOL/VapeHub/main/VapeHub.lua'))()
+    -- Load Orion UI
+    local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source.lua'))()
 
-    -- Create Vape Hub Window
-    local Window = VapeHub:CreateWindow({
-        Title = "Goated Hub for Street Wars 2",
+    -- Create Orion Window
+    local Window = OrionLib:MakeWindow({
+        Name = "Goated Hub for Street Wars 2",
         HidePremium = false,
         SaveConfig = true,
         ConfigFolder = "GoatedHubConfig"
@@ -46,7 +46,11 @@ if game.PlaceId == 11177482306 then
     end
 
     -- Player Tab
-    local playerTab = Window:CreateTab("Player")
+    local playerTab = Window:MakeTab({
+        Name = "Player",
+        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
+        PremiumOnly = false
+    })
     
     -- Walk Speed Slider
     playerTab:AddSlider({
@@ -80,7 +84,11 @@ if game.PlaceId == 11177482306 then
     })
 
     -- Teleports Tab
-    local teleportsTab = Window:CreateTab("Teleports")
+    local teleportsTab = Window:MakeTab({
+        Name = "Teleports",
+        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
+        PremiumOnly = false
+    })
 
     teleportsTab:AddButton({
         Name = "Teleport to Wheel",
@@ -91,7 +99,11 @@ if game.PlaceId == 11177482306 then
     })
 
     -- Troll Tab
-    local trollTab = Window:CreateTab("Troll")
+    local trollTab = Window:MakeTab({
+        Name = "Troll",
+        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
+        PremiumOnly = false
+    })
 
     -- Kill All Players Button
     trollTab:AddButton({
@@ -121,7 +133,11 @@ if game.PlaceId == 11177482306 then
     })
 
     -- Script Tab with Infinite Yield Toggle
-    local scriptTab = Window:CreateTab("Script")
+    local scriptTab = Window:MakeTab({
+        Name = "Script",
+        Icon = "rbxassetid://4483345998",  -- You can replace this with your own icon
+        PremiumOnly = false
+    })
 
     -- Toggle for Infinite Yield
     scriptTab:AddToggle({
