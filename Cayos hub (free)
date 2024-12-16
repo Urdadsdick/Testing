@@ -17,7 +17,8 @@ if game.PlaceId == 11177482306 then
         godMode = false,
         espEnabled = false,
         walkSpeed = 16,
-        infiniteAmmo = false
+        infiniteAmmo = false,
+        onePunch = false
     }
 
     -- Player Tab
@@ -51,15 +52,15 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             _G.godMode = state
-            if state then
+            while _G.godMode do
                 local player = game.Players.LocalPlayer
-                if player.Character then
-                    local humanoid = player.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.MaxHealth = math.huge
-                        humanoid.Health = math.huge
-                    end
+                local character = player.Character or player.CharacterAdded:Wait()
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid.MaxHealth = math.huge
+                    humanoid.Health = math.huge
                 end
+                wait(0.1)
             end
         end
     })
@@ -78,25 +79,8 @@ if game.PlaceId == 11177482306 then
         Callback = function(state)
             _G.autoFarm = state
             while _G.autoFarm do
-                -- Add the Auto Farm Functionality Here
-                -- For example: Automatically interact with "Paki Grocer" or mop floor spots
-                -- Replace the code below with specific actions required for your game
-                local player = game.Players.LocalPlayer
-                local pakiGrocer = workspace:FindFirstChild("Paki Grocer")  -- You may need to adjust this path
-                if pakiGrocer then
-                    -- Automate actions like using the mop to clean floor spots
-                    local mopTool = player.Backpack:FindFirstChild("Mop")
-                    if mopTool then
-                        -- Example of automating mop usage at certain spots
-                        local floorSpot = workspace:FindFirstChild("FloorSpot")  -- Adjust this to find the actual mop spots
-                        if floorSpot then
-                            -- Simulate cleaning floor
-                            mopTool:Activate()
-                            wait(0.5)  -- Adjust wait time based on the game mechanics
-                        end
-                    end
-                end
-                wait(0.1)  -- Adjust wait time for farming intervals
+                -- Replace with specific farming logic for Street Wars 2
+                wait(0.1)
             end
         end
     })
@@ -170,23 +154,45 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Script Tab
-    local scriptTab = Window:MakeTab({
-        Name = "Scripts",
+    -- Trolling Tab
+    local trollingTab = Window:MakeTab({
+        Name = "Trolling",
         Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
-    -- Infinite Yield Toggle
-    scriptTab:AddToggle({
-        Name = "Infinite Yield",
+    -- One Punch Toggle
+    trollingTab:AddToggle({
+        Name = "One Punch",
         Default = false,
         Callback = function(state)
-            if state then
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+            _G.onePunch = state
+            if _G.onePunch then
+                local player = game.Players.LocalPlayer
+                local character = player.Character or player.CharacterAdded:Wait()
+                local rootPart = character:WaitForChild("HumanoidRootPart")
+
+                -- Detect collision and set health to 0
+                rootPart.Touched:Connect(function(hit)
+                    if _G.onePunch and hit.Parent and hit.Parent:FindFirstChild("Humanoid") then
+                        local humanoid = hit.Parent:FindFirstChild("Humanoid")
+                        if humanoid and hit.Parent ~= character then
+                            humanoid.Health = 0
+                        end
+                    end
+                end)
             end
         end
     })
+
+    -- Credit Tab
+    local creditTab = Window:MakeTab({
+        Name = "Credits",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    creditTab:AddParagraph("Credits", "Development by yooo0684 on DC")
 
     -- Finish UI Setup
     OrionLib:Init()
