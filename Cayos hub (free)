@@ -12,36 +12,18 @@ if game.PlaceId == 11177482306 then
 
     -- Initialize Variables
     local _G = {
-        godMode = false,
         autoFarm = false,
         autoPickup = false,
-        espEnabled = false,
+        godMode = false,
         walkSpeed = 16,
+        espEnabled = false,
         infiniteAmmo = false,
         onePunch = false,
-        noclip = false
+        flySpeed = 50,
+        flying = false
     }
 
-    -- Function: AutoFarm Logic
-    local function autoFarmMop()
-        while _G.autoFarm do
-            local player = game.Players.LocalPlayer
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local humanoidRootPart = player.Character.HumanoidRootPart
-                for _, object in pairs(workspace:GetDescendants()) do
-                    if object:IsA("Model") and object.Name == "FloorSpot" then
-                        local prompt = object:FindFirstChildWhichIsA("ProximityPrompt", true)
-                        if prompt then
-                            humanoidRootPart.CFrame = object.PrimaryPart.CFrame
-                            wait(0.5) -- Small delay for the interaction
-                            fireproximityprompt(prompt)
-                        end
-                    end
-                end
-            end
-            wait(0.1)
-        end
-    end
+    local bodyVelocity, bodyGyro
 
     -- Player Tab
     local playerTab = Window:MakeTab({
@@ -68,19 +50,19 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Walk Speed Text Box for Mobile Users
+    -- Walk Speed Text Box (For Mobile Users)
     playerTab:AddTextbox({
         Name = "Set Walk Speed",
         Default = "16",
         TextDisappear = true,
-        Callback = function(text)
-            local value = tonumber(text)
-            if value and value >= 16 and value <= 100 then
-                _G.walkSpeed = value
+        Callback = function(value)
+            local speed = tonumber(value)
+            if speed then
+                _G.walkSpeed = speed
                 if game.Players.LocalPlayer.Character then
                     local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
                     if humanoid then
-                        humanoid.WalkSpeed = value
+                        humanoid.WalkSpeed = speed
                     end
                 end
             end
@@ -93,20 +75,94 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             _G.godMode = state
-            if state then
-                local player = game.Players.LocalPlayer
-                if player.Character then
-                    local humanoid = player.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-                            if _G.godMode and humanoid.Health < humanoid.MaxHealth then
-                                humanoid.Health = humanoid.MaxHealth
-                            end
-                        end)
-                        humanoid.Health = humanoid.MaxHealth
+            while _G.godMode do
+                local character = game.Players.LocalPlayer.Character
+                if character and character:FindFirstChild("Humanoid") then
+                    character.Humanoid.Health = math.huge
+                end
+                wait(0.1)
+            end
+        end
+    })
+
+    -- Noclip Toggle
+    playerTab:AddToggle({
+        Name = "Noclip",
+        Default = false,
+        Callback = function(state)
+            local noclip = state
+            game:GetService("RunService").Stepped:Connect(function()
+                if noclip and game.Players.LocalPlayer.Character then
+                    for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then
+                            part.CanCollide = false
+                        end
                     end
                 end
-            end
+            end)
+        end
+    })
+
+    -- Fly Function
+    local function startFly()
+        if _G.flying then return end
+        _G.flying = true
+        local rootPart = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            bodyVelocity = Instance.new("BodyVelocity", rootPart)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.zero
+
+            bodyGyro = Instance.new("BodyGyro", rootPart)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.CFrame = rootPart.CFrame
+
+            game:GetService("RunService").RenderStepped:Connect(function()
+                if _G.flying then
+                    local moveDirection = Vector3.zero
+                    local camera = workspace.CurrentCamera
+                    local userInputService = game:GetService("UserInputService")
+
+                    if userInputService:IsKeyDown(Enum.KeyCode.W) then
+                        moveDirection = moveDirection + camera.CFrame.LookVector
+                    end
+                    if userInputService:IsKeyDown(Enum.KeyCode.S) then
+                        moveDirection = moveDirection - camera.CFrame.LookVector
+                    end
+                    if userInputService:IsKeyDown(Enum.KeyCode.A) then
+                        moveDirection = moveDirection - camera.CFrame.RightVector
+                    end
+                    if userInputService:IsKeyDown(Enum.KeyCode.D) then
+                        moveDirection = moveDirection + camera.CFrame.RightVector
+                    end
+
+                    bodyVelocity.Velocity = moveDirection.Unit * _G.flySpeed
+                    bodyGyro.CFrame = camera.CFrame
+                end
+            end)
+        end
+    end
+
+    -- Unfly Function
+    local function stopFly()
+        _G.flying = false
+        if bodyVelocity then bodyVelocity:Destroy() end
+        if bodyGyro then bodyGyro:Destroy() end
+    end
+
+    -- Add Fly Button
+    playerTab:AddButton({
+        Name = "Fly",
+        Callback = function()
+            startFly()
+        end
+    })
+
+    -- Add Unfly Button
+    playerTab:AddButton({
+        Name = "Unfly",
+        Callback = function()
+            stopFly()
         end
     })
 
@@ -123,8 +179,20 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             _G.autoFarm = state
-            if state then
-                spawn(autoFarmMop)
+            while _G.autoFarm do
+                local mop = game.Players.LocalPlayer.Backpack:FindFirstChild("Mop")
+                local character = game.Players.LocalPlayer.Character
+                if mop and character then
+                    mop.Parent = character
+                    for _, spot in pairs(workspace:GetDescendants()) do
+                        if spot.Name == "FloorSpot" and spot:IsA("Part") then
+                            character.HumanoidRootPart.CFrame = spot.CFrame
+                            fireproximityprompt(spot:FindFirstChildOfClass("ProximityPrompt"))
+                            wait(0.2)
+                        end
+                    end
+                end
+                wait(1)
             end
         end
     })
@@ -135,25 +203,13 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             _G.autoPickup = state
-            if state then
-                spawn(function()
-                    while _G.autoPickup do
-                        for _, item in pairs(game.Workspace:GetChildren()) do
-                            if item:IsA("Tool") or item.Name == "Cash" then
-                                local character = game.Players.LocalPlayer.Character
-                                if character then
-                                    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-                                    if humanoidRootPart then
-                                        firetouchinterest(humanoidRootPart, item.Handle, 0)
-                                        wait(0.1)
-                                        firetouchinterest(humanoidRootPart, item.Handle, 1)
-                                    end
-                                end
-                            end
-                        end
-                        wait(0.5)
+            while _G.autoPickup do
+                for _, item in pairs(workspace:GetDescendants()) do
+                    if item:IsA("Tool") or item.Name == "Cash" then
+                        item.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
                     end
-                end)
+                end
+                wait(0.5)
             end
         end
     })
@@ -165,24 +221,21 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
+    -- ESP Toggle
     espTab:AddToggle({
         Name = "Enable ESP",
         Default = false,
         Callback = function(state)
             _G.espEnabled = state
-            if state then
-                spawn(function()
-                    while _G.espEnabled do
-                        for _, player in pairs(game.Players:GetPlayers()) do
-                            if player ~= game.Players.LocalPlayer and player.Character then
-                                local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                                highlight.FillColor = Color3.new(0, 1, 0)
-                                highlight.OutlineColor = Color3.new(1, 1, 1)
-                            end
-                        end
-                        wait(0.5)
+            while _G.espEnabled do
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                        highlight.FillColor = Color3.new(0, 1, 0)
+                        highlight.OutlineColor = Color3.new(1, 1, 1)
                     end
-                end)
+                end
+                wait(0.5)
             end
         end
     })
@@ -194,44 +247,26 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
+    -- One Punch Toggle
     trollingTab:AddToggle({
         Name = "One Punch",
         Default = false,
         Callback = function(state)
             _G.onePunch = state
-            if state then
-                spawn(function()
-                    while _G.onePunch do
-                        for _, player in pairs(game.Players:GetPlayers()) do
-                            if player ~= game.Players.LocalPlayer and player.Character then
-                                local humanoid = player.Character:FindFirstChild("Humanoid")
-                                if humanoid then
-                                    humanoid.Health = 0
-                                end
-                            end
+            while _G.onePunch do
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        local humanoid = player.Character:FindFirstChild("Humanoid")
+                        if humanoid then
+                            humanoid.Health = 0
                         end
-                        wait(0.1)
                     end
-                end)
+                end
+                wait(0.5)
             end
         end
     })
 
-    -- Credits Tab
-    local creditsTab = Window:MakeTab({
-        Name = "Credits",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    creditsTab:AddLabel("Development by yooo0684 on DC")
-    creditsTab:AddButton({
-        Name = "Join Discord",
-        Callback = function()
-            setclipboard("https://discord.gg/DvgnsUp3")
-        end
-    })
-
-    -- Initialize UI
+    -- Finish UI Setup
     OrionLib:Init()
 end
