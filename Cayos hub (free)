@@ -21,6 +21,22 @@ if game.PlaceId == 11177482306 then
         onePunch = false
     }
 
+    -- Function: Enable God Mode
+    local function enableGodMode()
+        local player = game.Players.LocalPlayer
+        if player.Character then
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                    if _G.godMode and humanoid.Health < humanoid.MaxHealth then
+                        humanoid.Health = humanoid.MaxHealth
+                    end
+                end)
+                humanoid.Health = humanoid.MaxHealth
+            end
+        end
+    end
+
     -- Player Tab
     local playerTab = Window:MakeTab({
         Name = "Player",
@@ -46,48 +62,33 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Walk Speed Text Box for Mobile
+    -- Walk Speed Text Box for Mobile Users
     playerTab:AddTextbox({
         Name = "Set Walk Speed",
         Default = "16",
         TextDisappear = true,
         Callback = function(text)
-            local speed = tonumber(text)
-            if speed and speed >= 16 and speed <= 100 then
-                _G.walkSpeed = speed
+            local value = tonumber(text)
+            if value and value >= 16 and value <= 100 then
+                _G.walkSpeed = value
                 if game.Players.LocalPlayer.Character then
                     local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
                     if humanoid then
-                        humanoid.WalkSpeed = speed
+                        humanoid.WalkSpeed = value
                     end
                 end
-            else
-                warn("Invalid speed value. Please enter a number between 16 and 100.")
             end
         end
     })
 
-    -- Godmode Toggle
+    -- God Mode Toggle
     playerTab:AddToggle({
         Name = "God Mode",
         Default = false,
         Callback = function(state)
             _G.godMode = state
-            while _G.godMode do
-                local player = game.Players.LocalPlayer
-                local character = player.Character
-                if character then
-                    local humanoid = character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.MaxHealth = math.huge
-                        humanoid.Health = math.huge
-                    else
-                        local newHumanoid = Instance.new("Humanoid")
-                        newHumanoid.Parent = character
-                        character:WaitForChild("Humanoid")
-                    end
-                end
-                wait(0.1)
+            if state then
+                enableGodMode()
             end
         end
     })
@@ -106,12 +107,12 @@ if game.PlaceId == 11177482306 then
         Callback = function(state)
             _G.autoFarm = state
             while _G.autoFarm do
-                for _, spot in pairs(game.Workspace:GetDescendants()) do
-                    if spot.Name == "Dirt" and spot:IsA("BasePart") then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = spot.CFrame
-                        fireproximityprompt(spot:FindFirstChildOfClass("ProximityPrompt"))
-                        wait(0.2)
-                    end
+                local player = game.Players.LocalPlayer
+                local mop = player.Backpack:FindFirstChild("Mop") or player.Character:FindFirstChild("Mop")
+                local grocer = game.Workspace:FindFirstChild("PakistaniGrocer")
+                if mop and grocer then
+                    player.Character.HumanoidRootPart.CFrame = grocer.HumanoidRootPart.CFrame
+                    mop:Activate()
                 end
                 wait(1)
             end
@@ -168,49 +169,33 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
+    -- One Punch Toggle
+    combatTab:AddToggle({
+        Name = "One Punch",
+        Default = false,
+        Callback = function(state)
+            _G.onePunch = state
+            while _G.onePunch do
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        player.Character.Humanoid.Health = 0
+                    end
+                end
+                wait(0.5)
+            end
+        end
+    })
+
     -- Infinite Ammo Toggle
     combatTab:AddToggle({
         Name = "Infinite Ammo",
         Default = false,
         Callback = function(state)
             _G.infiniteAmmo = state
-            if state then
-                while _G.infiniteAmmo do
-                    for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-                        if tool:FindFirstChild("Ammo") then
-                            tool.Ammo.Value = math.huge
-                        end
-                    end
-                    wait(0.1)
-                end
-            end
-        end
-    })
-
-    -- Trolling Tab
-    local trollingTab = Window:MakeTab({
-        Name = "Trolling",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- One Punch Toggle
-    trollingTab:AddToggle({
-        Name = "One Punch",
-        Default = false,
-        Callback = function(state)
-            _G.onePunch = state
-            while _G.onePunch do
-                local player = game.Players.LocalPlayer
-                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local rootPart = player.Character.HumanoidRootPart
-                    for _, target in pairs(game.Players:GetPlayers()) do
-                        if target ~= player and target.Character and target.Character:FindFirstChild("Humanoid") then
-                            local distance = (rootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
-                            if distance < 5 then
-                                target.Character.Humanoid.Health = 0
-                            end
-                        end
+            while _G.infiniteAmmo do
+                for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                    if tool:FindFirstChild("Ammo") then
+                        tool.Ammo.Value = math.huge
                     end
                 end
                 wait(0.1)
@@ -226,6 +211,20 @@ if game.PlaceId == 11177482306 then
     })
 
     creditsTab:AddLabel("Development by yooo0684 on Discord")
+    creditsTab:AddToggle({
+        Name = "Join Discord",
+        Default = false,
+        Callback = function(state)
+            if state then
+                setclipboard("https://discord.gg/DvgnsUp3")
+                OrionLib:MakeNotification({
+                    Name = "Discord Link Copied",
+                    Content = "The Discord invite link has been copied to your clipboard!",
+                    Time = 5
+                })
+            end
+        end
+    })
 
     -- Initialize UI
     OrionLib:Init()
