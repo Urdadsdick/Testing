@@ -18,22 +18,28 @@ if game.PlaceId == 11177482306 then
         espEnabled = false,
         walkSpeed = 16,
         infiniteAmmo = false,
-        onePunch = false
+        onePunch = false,
+        noclip = false
     }
 
-    -- Function: Enable God Mode
-    local function enableGodMode()
-        local player = game.Players.LocalPlayer
-        if player.Character then
-            local humanoid = player.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-                    if _G.godMode and humanoid.Health < humanoid.MaxHealth then
-                        humanoid.Health = humanoid.MaxHealth
+    -- Function: AutoFarm Logic
+    local function autoFarmMop()
+        while _G.autoFarm do
+            local player = game.Players.LocalPlayer
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local humanoidRootPart = player.Character.HumanoidRootPart
+                for _, object in pairs(workspace:GetDescendants()) do
+                    if object:IsA("Model") and object.Name == "FloorSpot" then
+                        local prompt = object:FindFirstChildWhichIsA("ProximityPrompt", true)
+                        if prompt then
+                            humanoidRootPart.CFrame = object.PrimaryPart.CFrame
+                            wait(0.5) -- Small delay for the interaction
+                            fireproximityprompt(prompt)
+                        end
                     end
-                end)
-                humanoid.Health = humanoid.MaxHealth
+                end
             end
+            wait(0.1)
         end
     end
 
@@ -88,7 +94,18 @@ if game.PlaceId == 11177482306 then
         Callback = function(state)
             _G.godMode = state
             if state then
-                enableGodMode()
+                local player = game.Players.LocalPlayer
+                if player.Character then
+                    local humanoid = player.Character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                            if _G.godMode and humanoid.Health < humanoid.MaxHealth then
+                                humanoid.Health = humanoid.MaxHealth
+                            end
+                        end)
+                        humanoid.Health = humanoid.MaxHealth
+                    end
+                end
             end
         end
     })
@@ -106,15 +123,8 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             _G.autoFarm = state
-            while _G.autoFarm do
-                local player = game.Players.LocalPlayer
-                local mop = player.Backpack:FindFirstChild("Mop") or player.Character:FindFirstChild("Mop")
-                local grocer = game.Workspace:FindFirstChild("PakistaniGrocer")
-                if mop and grocer then
-                    player.Character.HumanoidRootPart.CFrame = grocer.HumanoidRootPart.CFrame
-                    mop:Activate()
-                end
-                wait(1)
+            if state then
+                spawn(autoFarmMop)
             end
         end
     })
@@ -125,13 +135,25 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             _G.autoPickup = state
-            while _G.autoPickup do
-                for _, item in pairs(game.Workspace:GetChildren()) do
-                    if item:IsA("Tool") or item.Name == "Cash" then
-                        item.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+            if state then
+                spawn(function()
+                    while _G.autoPickup do
+                        for _, item in pairs(game.Workspace:GetChildren()) do
+                            if item:IsA("Tool") or item.Name == "Cash" then
+                                local character = game.Players.LocalPlayer.Character
+                                if character then
+                                    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                                    if humanoidRootPart then
+                                        firetouchinterest(humanoidRootPart, item.Handle, 0)
+                                        wait(0.1)
+                                        firetouchinterest(humanoidRootPart, item.Handle, 1)
+                                    end
+                                end
+                            end
+                        end
+                        wait(0.5)
                     end
-                end
-                wait(0.5)
+                end)
             end
         end
     })
@@ -143,62 +165,54 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    -- ESP Toggle
     espTab:AddToggle({
         Name = "Enable ESP",
         Default = false,
         Callback = function(state)
             _G.espEnabled = state
-            while _G.espEnabled do
-                for _, player in pairs(game.Players:GetPlayers()) do
-                    if player ~= game.Players.LocalPlayer and player.Character then
-                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                        highlight.FillColor = Color3.new(0, 1, 0)
-                        highlight.OutlineColor = Color3.new(1, 1, 1)
+            if state then
+                spawn(function()
+                    while _G.espEnabled do
+                        for _, player in pairs(game.Players:GetPlayers()) do
+                            if player ~= game.Players.LocalPlayer and player.Character then
+                                local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                                highlight.FillColor = Color3.new(0, 1, 0)
+                                highlight.OutlineColor = Color3.new(1, 1, 1)
+                            end
+                        end
+                        wait(0.5)
                     end
-                end
-                wait(0.5)
+                end)
             end
         end
     })
 
-    -- Combat Tab
-    local combatTab = Window:MakeTab({
-        Name = "Combat",
+    -- Trolling Tab
+    local trollingTab = Window:MakeTab({
+        Name = "Trolling",
         Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
 
-    -- One Punch Toggle
-    combatTab:AddToggle({
+    trollingTab:AddToggle({
         Name = "One Punch",
         Default = false,
         Callback = function(state)
             _G.onePunch = state
-            while _G.onePunch do
-                for _, player in pairs(game.Players:GetPlayers()) do
-                    if player ~= game.Players.LocalPlayer and player.Character then
-                        player.Character.Humanoid.Health = 0
+            if state then
+                spawn(function()
+                    while _G.onePunch do
+                        for _, player in pairs(game.Players:GetPlayers()) do
+                            if player ~= game.Players.LocalPlayer and player.Character then
+                                local humanoid = player.Character:FindFirstChild("Humanoid")
+                                if humanoid then
+                                    humanoid.Health = 0
+                                end
+                            end
+                        end
+                        wait(0.1)
                     end
-                end
-                wait(0.5)
-            end
-        end
-    })
-
-    -- Infinite Ammo Toggle
-    combatTab:AddToggle({
-        Name = "Infinite Ammo",
-        Default = false,
-        Callback = function(state)
-            _G.infiniteAmmo = state
-            while _G.infiniteAmmo do
-                for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-                    if tool:FindFirstChild("Ammo") then
-                        tool.Ammo.Value = math.huge
-                    end
-                end
-                wait(0.1)
+                end)
             end
         end
     })
@@ -210,19 +224,11 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    creditsTab:AddLabel("Development by yooo0684 on Discord")
-    creditsTab:AddToggle({
+    creditsTab:AddLabel("Development by yooo0684 on DC")
+    creditsTab:AddButton({
         Name = "Join Discord",
-        Default = false,
-        Callback = function(state)
-            if state then
-                setclipboard("https://discord.gg/DvgnsUp3")
-                OrionLib:MakeNotification({
-                    Name = "Discord Link Copied",
-                    Content = "The Discord invite link has been copied to your clipboard!",
-                    Time = 5
-                })
-            end
+        Callback = function()
+            setclipboard("https://discord.gg/DvgnsUp3")
         end
     })
 
