@@ -15,15 +15,13 @@ if game.PlaceId == 11177482306 then
         autoFarm = false,
         autoPickup = false,
         godMode = false,
-        walkSpeed = 16,
         espEnabled = false,
+        walkSpeed = 16,
         infiniteAmmo = false,
-        onePunch = false,
-        flySpeed = 50,
-        flying = false
+        noclip = false,
+        flying = false,
+        flySpeed = 50
     }
-
-    local bodyVelocity, bodyGyro
 
     -- Player Tab
     local playerTab = Window:MakeTab({
@@ -50,11 +48,11 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Walk Speed Text Box (For Mobile Users)
+    -- Walk Speed Text Box for Mobile Users
     playerTab:AddTextbox({
         Name = "Set Walk Speed",
         Default = "16",
-        TextDisappear = true,
+        TextDisappear = false,
         Callback = function(value)
             local speed = tonumber(value)
             if speed then
@@ -77,22 +75,82 @@ if game.PlaceId == 11177482306 then
             _G.godMode = state
             while _G.godMode do
                 local character = game.Players.LocalPlayer.Character
-                if character and character:FindFirstChild("Humanoid") then
-                    character.Humanoid.Health = math.huge
+                if character then
+                    -- Protect Humanoid
+                    local humanoid = character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid.MaxHealth = math.huge
+                        humanoid.Health = math.huge
+                    end
+
+                    -- Remove or Disable Damage Scripts
+                    for _, obj in pairs(character:GetDescendants()) do
+                        if obj:IsA("Script") or obj:IsA("LocalScript") then
+                            if string.find(obj.Name:lower(), "damage") then
+                                obj:Destroy() -- Prevents damage scripts from running
+                            end
+                        end
+                    end
+
+                    -- Check for Custom Health Attributes
+                    if character:FindFirstChild("Health") then
+                        character.Health.Value = math.huge -- Overwrite custom health systems
+                    end
                 end
                 wait(0.1)
             end
         end
     })
 
-    -- Noclip Toggle
+    -- Fly Toggle
+    local flying = false
+    local flySpeed = 50
+
+    local function startFly()
+        flying = true
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        bodyVelocity.Velocity = Vector3.zero
+        bodyVelocity.Parent = humanoidRootPart
+
+        while flying do
+            bodyVelocity.Velocity = humanoidRootPart.CFrame.LookVector * flySpeed
+            wait()
+        end
+
+        bodyVelocity:Destroy()
+    end
+
+    local function stopFly()
+        flying = false
+    end
+
+    playerTab:AddButton({
+        Name = "Fly",
+        Callback = function()
+            startFly()
+        end
+    })
+
+    playerTab:AddButton({
+        Name = "Unfly",
+        Callback = function()
+            stopFly()
+        end
+    })
+
+    -- NoClip Toggle
     playerTab:AddToggle({
-        Name = "Noclip",
+        Name = "NoClip",
         Default = false,
         Callback = function(state)
-            local noclip = state
+            _G.noclip = state
             game:GetService("RunService").Stepped:Connect(function()
-                if noclip and game.Players.LocalPlayer.Character then
+                if _G.noclip and game.Players.LocalPlayer.Character then
                     for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
                         if part:IsA("BasePart") and part.CanCollide then
                             part.CanCollide = false
@@ -103,69 +161,6 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Fly Function
-    local function startFly()
-        if _G.flying then return end
-        _G.flying = true
-        local rootPart = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if rootPart then
-            bodyVelocity = Instance.new("BodyVelocity", rootPart)
-            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            bodyVelocity.Velocity = Vector3.zero
-
-            bodyGyro = Instance.new("BodyGyro", rootPart)
-            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-            bodyGyro.CFrame = rootPart.CFrame
-
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if _G.flying then
-                    local moveDirection = Vector3.zero
-                    local camera = workspace.CurrentCamera
-                    local userInputService = game:GetService("UserInputService")
-
-                    if userInputService:IsKeyDown(Enum.KeyCode.W) then
-                        moveDirection = moveDirection + camera.CFrame.LookVector
-                    end
-                    if userInputService:IsKeyDown(Enum.KeyCode.S) then
-                        moveDirection = moveDirection - camera.CFrame.LookVector
-                    end
-                    if userInputService:IsKeyDown(Enum.KeyCode.A) then
-                        moveDirection = moveDirection - camera.CFrame.RightVector
-                    end
-                    if userInputService:IsKeyDown(Enum.KeyCode.D) then
-                        moveDirection = moveDirection + camera.CFrame.RightVector
-                    end
-
-                    bodyVelocity.Velocity = moveDirection.Unit * _G.flySpeed
-                    bodyGyro.CFrame = camera.CFrame
-                end
-            end)
-        end
-    end
-
-    -- Unfly Function
-    local function stopFly()
-        _G.flying = false
-        if bodyVelocity then bodyVelocity:Destroy() end
-        if bodyGyro then bodyGyro:Destroy() end
-    end
-
-    -- Add Fly Button
-    playerTab:AddButton({
-        Name = "Fly",
-        Callback = function()
-            startFly()
-        end
-    })
-
-    -- Add Unfly Button
-    playerTab:AddButton({
-        Name = "Unfly",
-        Callback = function()
-            stopFly()
-        end
-    })
-
     -- Farming Tab
     local farmingTab = Window:MakeTab({
         Name = "Farming",
@@ -173,31 +168,34 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    -- Auto Farm Toggle
     farmingTab:AddToggle({
-        Name = "Auto Farm",
+        Name = "Auto Farm Mop",
         Default = false,
         Callback = function(state)
             _G.autoFarm = state
             while _G.autoFarm do
-                local mop = game.Players.LocalPlayer.Backpack:FindFirstChild("Mop")
-                local character = game.Players.LocalPlayer.Character
-                if mop and character then
-                    mop.Parent = character
-                    for _, spot in pairs(workspace:GetDescendants()) do
-                        if spot.Name == "FloorSpot" and spot:IsA("Part") then
-                            character.HumanoidRootPart.CFrame = spot.CFrame
-                            fireproximityprompt(spot:FindFirstChildOfClass("ProximityPrompt"))
-                            wait(0.2)
+                local player = game.Players.LocalPlayer
+                local character = player.Character
+                local mop = player.Backpack:FindFirstChild("Mop") or character:FindFirstChild("Mop")
+
+                if mop then
+                    if character then
+                        character.Humanoid:EquipTool(mop)
+                        for _, spot in pairs(workspace:GetDescendants()) do
+                            if spot.Name == "DirtSpot" then
+                                local proximityPrompt = spot:FindFirstChild("ProximityPrompt", true)
+                                if proximityPrompt then
+                                    fireproximityprompt(proximityPrompt)
+                                end
+                            end
                         end
                     end
                 end
-                wait(1)
+                wait(0.1)
             end
         end
     })
 
-    -- Auto Pickup Toggle
     farmingTab:AddToggle({
         Name = "Auto Pickup",
         Default = false,
@@ -221,7 +219,6 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    -- ESP Toggle
     espTab:AddToggle({
         Name = "Enable ESP",
         Default = false,
@@ -247,7 +244,6 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    -- One Punch Toggle
     trollingTab:AddToggle({
         Name = "One Punch",
         Default = false,
@@ -255,14 +251,11 @@ if game.PlaceId == 11177482306 then
             _G.onePunch = state
             while _G.onePunch do
                 for _, player in pairs(game.Players:GetPlayers()) do
-                    if player ~= game.Players.LocalPlayer and player.Character then
-                        local humanoid = player.Character:FindFirstChild("Humanoid")
-                        if humanoid then
-                            humanoid.Health = 0
-                        end
+                    if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
+                        player.Character.Humanoid.Health = 0
                     end
                 end
-                wait(0.5)
+                wait(0.1)
             end
         end
     })
@@ -274,7 +267,8 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    creditsTab:AddLabel("Developed by yooo0684 on Discord")
+    creditsTab:AddLabel("Development by yooo0684 on Discord")
+
     creditsTab:AddButton({
         Name = "Join Discord",
         Callback = function()
