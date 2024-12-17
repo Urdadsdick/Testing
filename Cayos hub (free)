@@ -267,6 +267,21 @@ if game.PlaceId == 11177482306 then
         end
     })
 
+    -- Credits Tab
+    local creditsTab = Window:MakeTab({
+        Name = "Credits",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    creditsTab:AddLabel("Developed by yooo0684 on Discord")
+    creditsTab:AddButton({
+        Name = "Join Discord",
+        Callback = function()
+            setclipboard("https://discord.gg/DvgnsUp3")
+        end
+    })
+
     -- Finish UI Setup
     OrionLib:Init()
 end
