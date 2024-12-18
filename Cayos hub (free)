@@ -35,20 +35,21 @@ if game.PlaceId == 11177482306 then
 
     --- CORE FUNCTIONS ---
 
-    -- Custom Damage Integration (Placeholder)
-    local function dealDamage(targetPlayer, damageAmount)
-        -- Replace this with custom damage handling logic
-        local damageEvent = replicatedStorage:FindFirstChild("DamageEvent") -- Example remote name
-        if damageEvent then
-            damageEvent:FireServer(targetPlayer, damageAmount)
-        else
-            warn("Custom damage event not found.")
+    -- Custom Damage Integration (Bypassing)
+    local function dealDamage(targetPlayer)
+        local character = targetPlayer and targetPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Health = 0 -- Instantly set health to zero
+            else
+                warn("Humanoid not found in target player.")
+            end
         end
     end
 
     -- Custom Health Integration (Placeholder)
     local function restoreHealth(character)
-        -- Replace this with custom health handling logic
         local humanoid = character and character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.Health = humanoid.MaxHealth
@@ -61,7 +62,7 @@ if game.PlaceId == 11177482306 then
         while settings.godMode do
             local character = plr.Character
             if character then
-                restoreHealth(character) -- Use custom health logic if required
+                restoreHealth(character)
             end
             wait(0.1)
         end
@@ -77,7 +78,7 @@ if game.PlaceId == 11177482306 then
         while settings.onePunch do
             for _, player in pairs(players:GetPlayers()) do
                 if player ~= plr and player.Character then
-                    dealDamage(player, 999999) -- Replace with appropriate damage logic
+                    dealDamage(player) -- Use bypassed damage logic
                 end
             end
             wait(rnd(0.1, 0.3))
@@ -86,6 +87,28 @@ if game.PlaceId == 11177482306 then
 
     local function disableOnePunch()
         settings.onePunch = false
+    end
+
+    -- Auto Pickup
+    local function enableAutoPickup()
+        settings.autoPickup = true
+        while settings.autoPickup do
+            local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                for _, item in pairs(workspace:GetDescendants()) do
+                    if item:IsA("Tool") or item.Name == "Cash" then
+                        pcall(function()
+                            item.CFrame = root.CFrame -- Move item to the player's position
+                        end)
+                    end
+                end
+            end
+            wait(rnd(0.5, 1))
+        end
+    end
+
+    local function disableAutoPickup()
+        settings.autoPickup = false
     end
 
     --- PLAYER TAB ---
@@ -148,15 +171,7 @@ if game.PlaceId == 11177482306 then
         Name = "Auto Pickup",
         Default = false,
         Callback = function(state)
-            settings.autoPickup = state
-            while settings.autoPickup do
-                for _, item in pairs(workspace:GetChildren()) do
-                    if item:IsA("Tool") or item.Name == "Cash" then
-                        item.CFrame = plr.Character.HumanoidRootPart.CFrame
-                    end
-                end
-                wait(rnd(0.5, 1))
-            end
+            if state then enableAutoPickup() else disableAutoPickup() end
         end
     })
 
