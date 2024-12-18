@@ -251,6 +251,12 @@ if game.PlaceId == 11177482306 then
     })
 
     creditsTab:AddLabel("Development by yooo0684 on DC")
+    creditsTab:AddButton({
+        Name = "Join Discord",
+        Callback = function()
+            setclipboard("https://discord.gg/DvgnsUp3")
+        end
+    })
 
     -- Finish UI Setup
     OrionLib:Init()
