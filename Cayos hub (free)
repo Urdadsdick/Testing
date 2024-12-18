@@ -14,28 +14,11 @@ if game.PlaceId == 11177482306 then
     local _G = {
         autoFarm = false,
         autoPickup = false,
-        godMode = false,
-        espEnabled = false,
         walkSpeed = 16,
+        espEnabled = false,
         infiniteAmmo = false,
-        noclip = false,
-        onePunch = false
+        godMode = false
     }
-
-    -- Credits Tab
-    local creditsTab = Window:MakeTab({
-        Name = "Credits",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    creditsTab:AddLabel("Development by yooo0684 on DC")
-    creditsTab:AddButton({
-        Name = "Join Discord",
-        Callback = function()
-            setclipboard("https://discord.gg/DvgnsUp3")
-        end
-    })
 
     -- Player Tab
     local playerTab = Window:MakeTab({
@@ -44,7 +27,7 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    -- Walk Speed Slider and Text Box
+    -- Walk Speed Slider
     playerTab:AddSlider({
         Name = "Walk Speed",
         Min = 16,
@@ -62,33 +45,52 @@ if game.PlaceId == 11177482306 then
         end
     })
 
+    -- Walk Speed Text Box (for Mobile)
     playerTab:AddTextbox({
-        Name = "Walk Speed (Mobile)",
-        Default = "16",
+        Name = "Set Walk Speed",
+        Default = tostring(_G.walkSpeed),
         TextDisappear = true,
         Callback = function(value)
-            _G.walkSpeed = tonumber(value)
-            if game.Players.LocalPlayer.Character then
+            local speed = tonumber(value)
+            if speed and game.Players.LocalPlayer.Character then
+                _G.walkSpeed = speed
                 local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
                 if humanoid then
-                    humanoid.WalkSpeed = _G.walkSpeed
+                    humanoid.WalkSpeed = speed
                 end
             end
         end
     })
 
-    -- Fly and Unfly
+    -- Fly/Unfly
     local flying = false
-    local function startFly()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        flying = true
+    local flySpeed = 50
+    local bodyGyro, bodyVelocity
 
-        spawn(function()
-            while flying do
-                humanoidRootPart.Velocity = humanoidRootPart.CFrame.LookVector * 100
-                wait()
+    local function startFly()
+        if flying then return end
+        flying = true
+        local character = game.Players.LocalPlayer.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        bodyGyro = Instance.new("BodyGyro", root)
+        bodyVelocity = Instance.new("BodyVelocity", root)
+
+        bodyGyro.P = 9e4
+        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bodyGyro.CFrame = root.CFrame
+
+        bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bodyVelocity.Velocity = Vector3.zero
+
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if flying then
+                bodyGyro.CFrame = root.CFrame
+                bodyVelocity.Velocity = root.CFrame.LookVector * flySpeed
+            else
+                bodyGyro:Destroy()
+                bodyVelocity:Destroy()
             end
         end)
     end
@@ -112,162 +114,73 @@ if game.PlaceId == 11177482306 then
     })
 
     -- God Mode
+    local function enableGodMode()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        -- Prevent health reduction
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                    if humanoid.Health < humanoid.MaxHealth then
+                        humanoid.Health = humanoid.MaxHealth
+                    end
+                end)
+
+                humanoid:SetAttribute("Invincible", true)
+            end
+
+            -- Remove damage scripts
+            for _, obj in pairs(character:GetDescendants()) do
+                if obj:IsA("Script") or obj:IsA("LocalScript") then
+                    if string.find(obj.Name:lower(), "damage") or string.find(obj.Source:lower(), "damage") then
+                        obj:Destroy()
+                    end
+                end
+            end
+
+            -- Replace damage events
+            if character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.ChildAdded:Connect(function(child)
+                    if child:IsA("Script") or child:IsA("LocalScript") then
+                        if string.find(child.Name:lower(), "damage") then
+                            child:Destroy()
+                        end
+                    end
+                end)
+            end
+        end
+    end
+
+    local function disableGodMode()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        -- Restore default behavior
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:SetAttribute("Invincible", false)
+            end
+        end
+    end
+
     playerTab:AddToggle({
         Name = "God Mode",
         Default = false,
         Callback = function(state)
             _G.godMode = state
             if state then
-                local player = game.Players.LocalPlayer
-                local character = player.Character or player.CharacterAdded:Wait()
-
-                for _, obj in pairs(character:GetDescendants()) do
-                    if obj:IsA("Humanoid") then
-                        obj:SetAttribute("Invincible", true)
-                        obj:GetPropertyChangedSignal("Health"):Connect(function()
-                            if obj:GetAttribute("Invincible") and obj.Health < obj.MaxHealth then
-                                obj.Health = obj.MaxHealth
-                            end
-                        end)
-                    end
-                end
+                enableGodMode()
+            else
+                disableGodMode()
             end
         end
     })
 
-    -- Noclip Toggle
-    playerTab:AddToggle({
-        Name = "Noclip",
-        Default = false,
-        Callback = function(state)
-            _G.noclip = state
-            while _G.noclip do
-                for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") and part.CanCollide then
-                        part.CanCollide = false
-                    end
-                end
-                wait()
-            end
-        end
-    })
+    -- Add other tabs like Farming, ESP, Trolling, Credits, etc.
 
-    -- Farming Tab
-    local farmingTab = Window:MakeTab({
-        Name = "Farming",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    farmingTab:AddToggle({
-        Name = "Auto Farm Mop",
-        Default = false,
-        Callback = function(state)
-            _G.autoFarm = state
-            while _G.autoFarm do
-                local mop = game.Players.LocalPlayer.Backpack:FindFirstChild("Mop") or game.Players.LocalPlayer.Character:FindFirstChild("Mop")
-                if mop then
-                    local floorSpots = workspace:FindFirstChild("FloorSpots") or {}
-                    for _, spot in pairs(floorSpots:GetChildren()) do
-                        if spot:FindFirstChild("Prompt") then
-                            fireproximityprompt(spot.Prompt)
-                        end
-                    end
-                end
-                wait(0.5)
-            end
-        end
-    })
-
-    -- ESP Tab
-    local espTab = Window:MakeTab({
-        Name = "ESP",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    espTab:AddToggle({
-        Name = "Enable ESP",
-        Default = false,
-        Callback = function(state)
-            _G.espEnabled = state
-            while _G.espEnabled do
-                for _, player in pairs(game.Players:GetPlayers()) do
-                    if player ~= game.Players.LocalPlayer and player.Character then
-                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                        highlight.FillColor = Color3.new(0, 1, 0)
-                        highlight.OutlineColor = Color3.new(1, 1, 1)
-                    end
-                end
-                wait(0.5)
-            end
-        end
-    })
-
-    -- Combat Tab
-    local combatTab = Window:MakeTab({
-        Name = "Combat",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    combatTab:AddToggle({
-        Name = "Infinite Ammo",
-        Default = false,
-        Callback = function(state)
-            _G.infiniteAmmo = state
-            while _G.infiniteAmmo do
-                for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-                    if tool:FindFirstChild("Ammo") then
-                        tool.Ammo.Value = math.huge
-                    end
-                end
-                wait(0.1)
-            end
-        end
-    })
-
-    -- Trolling Tab
-    local trollingTab = Window:MakeTab({
-        Name = "Trolling",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    trollingTab:AddToggle({
-        Name = "One Punch (Bypass Damage Scripts)",
-        Default = false,
-        Callback = function(state)
-            _G.onePunch = state
-            if state then
-                local player = game.Players.LocalPlayer
-                local character = player.Character or player.CharacterAdded:Wait()
-                local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-
-                if humanoidRootPart then
-                    humanoidRootPart.Touched:Connect(function(hit)
-                        local hitPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
-                        if hitPlayer and hitPlayer ~= player then
-                            local humanoid = hit.Parent:FindFirstChild("Humanoid")
-                            if humanoid then
-                                humanoid.Health = 0
-                            end
-
-                            -- Destroy potential damage scripts on their character
-                            for _, obj in pairs(hit.Parent:GetDescendants()) do
-                                if obj:IsA("Script") or obj:IsA("LocalScript") then
-                                    if string.find(obj.Name:lower(), "damage") or string.find(obj.Source:lower(), "damage") then
-                                        obj:Destroy()
-                                    end
-                                end
-                            end
-                        end
-                    end)
-                end
-            end
-        end
-    })
-
-    -- Initialize UI
+    -- Finish UI Setup
     OrionLib:Init()
 end
