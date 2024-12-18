@@ -1,19 +1,16 @@
 if game.PlaceId == 11177482306 then
-    -- Obfuscated service and function references
+    -- Services
     local getService = function(name) return game:GetService(name) end
     local runService = getService("RunService")
     local players = getService("Players")
     local replicatedStorage = getService("ReplicatedStorage")
+    local workspace = getService("Workspace")
 
-    -- Local player reference
+    -- Player reference
     local plr = players.LocalPlayer
 
-    -- Obfuscate Orion URL using base64 decoding
-    local decode = function(str) return string.char(unpack({string.byte(str, 1, #str)})) end
-    local orionURL = decode("\104\116\116\112\115\58\47\47\114\97\119\46\103\105\116\104\117\98\117\115\101\114\99\111\110\116\101\110\116\46\99\111\109\47\115\104\108\101\120\119\97\114\101\47\79\114\105\111\110\47\109\97\105\110\47\115\111\117\114\99\101")
-    local OrionLib = loadstring(game:HttpGet(orionURL))()
-
-    -- Create Main Window
+    -- Load UI Library (Orion)
+    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
     local Window = OrionLib:MakeWindow({
         Name = "Goated Hub - Street Wars 2",
         HidePremium = false,
@@ -21,7 +18,7 @@ if game.PlaceId == 11177482306 then
         ConfigFolder = "GoatedHub"
     })
 
-    -- Global Settings Table
+    -- Global Settings
     local settings = {
         autoFarm = false,
         autoPickup = false,
@@ -32,18 +29,68 @@ if game.PlaceId == 11177482306 then
         onePunch = false
     }
 
-    -- Dynamic randomizer for delays
+    -- Utility: Dynamic Random Delay
     local random = Random.new()
     local function rnd(min, max) return random:NextNumber(min, max) end
 
-    --- PLAYER TAB ---
-    local playerTab = Window:MakeTab({
-        Name = "Player",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
+    --- CORE FUNCTIONS ---
 
-    -- Walk Speed Slider
+    -- Custom Damage Integration (Placeholder)
+    local function dealDamage(targetPlayer, damageAmount)
+        -- Replace this with custom damage handling logic
+        local damageEvent = replicatedStorage:FindFirstChild("DamageEvent") -- Example remote name
+        if damageEvent then
+            damageEvent:FireServer(targetPlayer, damageAmount)
+        else
+            warn("Custom damage event not found.")
+        end
+    end
+
+    -- Custom Health Integration (Placeholder)
+    local function restoreHealth(character)
+        -- Replace this with custom health handling logic
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Health = humanoid.MaxHealth
+        end
+    end
+
+    -- God Mode
+    local function enableGodMode()
+        settings.godMode = true
+        while settings.godMode do
+            local character = plr.Character
+            if character then
+                restoreHealth(character) -- Use custom health logic if required
+            end
+            wait(0.1)
+        end
+    end
+
+    local function disableGodMode()
+        settings.godMode = false
+    end
+
+    -- One Punch Kill
+    local function enableOnePunch()
+        settings.onePunch = true
+        while settings.onePunch do
+            for _, player in pairs(players:GetPlayers()) do
+                if player ~= plr and player.Character then
+                    dealDamage(player, 999999) -- Replace with appropriate damage logic
+                end
+            end
+            wait(rnd(0.1, 0.3))
+        end
+    end
+
+    local function disableOnePunch()
+        settings.onePunch = false
+    end
+
+    --- PLAYER TAB ---
+    local playerTab = Window:MakeTab({ Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
     playerTab:AddSlider({
         Name = "Walk Speed",
         Min = 16,
@@ -60,7 +107,81 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Fly/Unfly
+    playerTab:AddToggle({
+        Name = "God Mode",
+        Default = false,
+        Callback = function(state)
+            if state then enableGodMode() else disableGodMode() end
+        end
+    })
+
+    playerTab:AddToggle({
+        Name = "One Punch Kill",
+        Default = false,
+        Callback = function(state)
+            if state then enableOnePunch() else disableOnePunch() end
+        end
+    })
+
+    --- FARMING TAB ---
+    local farmingTab = Window:MakeTab({ Name = "Farming", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    farmingTab:AddToggle({
+        Name = "Auto Mop Farm",
+        Default = false,
+        Callback = function(state)
+            settings.autoFarm = state
+            while settings.autoFarm do
+                local mop = plr.Backpack:FindFirstChild("Mop")
+                if mop then
+                    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        replicatedStorage.Remote:FireServer(mop, "Use", root.CFrame)
+                    end
+                end
+                wait(rnd(0.1, 0.3))
+            end
+        end
+    })
+
+    farmingTab:AddToggle({
+        Name = "Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            settings.autoPickup = state
+            while settings.autoPickup do
+                for _, item in pairs(workspace:GetChildren()) do
+                    if item:IsA("Tool") or item.Name == "Cash" then
+                        item.CFrame = plr.Character.HumanoidRootPart.CFrame
+                    end
+                end
+                wait(rnd(0.5, 1))
+            end
+        end
+    })
+
+    --- ESP TAB ---
+    local espTab = Window:MakeTab({ Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    espTab:AddToggle({
+        Name = "Enable ESP",
+        Default = false,
+        Callback = function(state)
+            settings.espEnabled = state
+            while settings.espEnabled do
+                for _, player in pairs(players:GetPlayers()) do
+                    if player ~= plr and player.Character then
+                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                        highlight.FillColor = Color3.new(rnd(0, 1), rnd(0, 1), rnd(0, 1))
+                        highlight.OutlineColor = Color3.new(1, 1, 1)
+                    end
+                end
+                wait(rnd(0.3, 0.5))
+            end
+        end
+    })
+
+    --- FLYING TAB ---
     local flying = false
     local function startFly()
         if flying then return end
@@ -91,179 +212,13 @@ if game.PlaceId == 11177482306 then
 
     local function stopFly() flying = false end
 
-    playerTab:AddButton({ Name = "Fly", Callback = startFly })
-    playerTab:AddButton({ Name = "Unfly", Callback = stopFly })
-
-    -- Improved God Mode
-    local function enableGodMode()
-        local character = plr.Character or plr.CharacterAdded:Wait()
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-        if humanoid then
-            -- Health Lock
-            humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-                if humanoid.Health < humanoid.MaxHealth then
-                    humanoid.Health = humanoid.MaxHealth
-                end
-            end)
-
-            humanoid.Health = humanoid.MaxHealth  -- Ensure full health initially
-
-            -- Remove damage scripts
-            for _, descendant in pairs(character:GetDescendants()) do
-                if descendant:IsA("Script") or descendant:IsA("LocalScript") then
-                    if string.find(descendant.Name:lower(), "damage") or descendant.Source:match("damage") then
-                        descendant:Destroy()
-                    end
-                end
-            end
-
-            -- Block new damage scripts
-            character.DescendantAdded:Connect(function(descendant)
-                if descendant:IsA("Script") or descendant:IsA("LocalScript") then
-                    if string.find(descendant.Name:lower(), "damage") then
-                        descendant:Destroy()
-                    end
-                end
-            end)
-
-            -- Block damage events
-            local root = character:FindFirstChild("HumanoidRootPart")
-            if root then
-                root.ChildAdded:Connect(function(child)
-                    if child:IsA("Script") or child:IsA("LocalScript") then
-                        if string.find(child.Name:lower(), "damage") then
-                            child:Destroy()
-                        end
-                    end
-                end)
-            end
-        end
-    end
-
-    local function disableGodMode()
-        local character = plr.Character or plr.CharacterAdded:Wait()
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-        if humanoid then
-            humanoid:SetAttribute("GodMode", false)
-        end
-    end
-
-    playerTab:AddToggle({
-        Name = "God Mode",
-        Default = false,
-        Callback = function(state)
-            settings.godMode = state
-            if state then
-                enableGodMode()
-            else
-                disableGodMode()
-            end
-        end
-    })
-
-    --- TROLLING TAB ---
-    local trollingTab = Window:MakeTab({
-        Name = "Trolling",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- One Punch Toggle
-    trollingTab:AddToggle({
-        Name = "One Punch Kill",
-        Default = false,
-        Callback = function(state)
-            settings.onePunch = state
-            while settings.onePunch do
-                for _, player in pairs(players:GetPlayers()) do
-                    if player ~= plr and player.Character then
-                        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                        if humanoid then humanoid.Health = 0 end
-                    end
-                end
-                wait(rnd(0.1, 0.3))
-            end
-        end
-    })
-
-    --- FARMING TAB ---
-    local farmingTab = Window:MakeTab({
-        Name = "Farming",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    -- Auto Mop Farm
-    farmingTab:AddToggle({
-        Name = "Auto Mop Farm",
-        Default = false,
-        Callback = function(state)
-            settings.autoFarm = state
-            while settings.autoFarm do
-                local mop = plr.Backpack:FindFirstChild("Mop")
-                if mop then
-                    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        replicatedStorage.Remote:FireServer(mop, "Use", root.CFrame)
-                    end
-                end
-                wait(rnd(0.1, 0.3))
-            end
-        end
-    })
-
-    -- Auto Pickup
-    farmingTab:AddToggle({
-        Name = "Auto Pickup",
-        Default = false,
-        Callback = function(state)
-            settings.autoPickup = state
-            while settings.autoPickup do
-                for _, item in pairs(getService("Workspace"):GetChildren()) do
-                    if item:IsA("Tool") or item.Name == "Cash" then
-                        item.CFrame = plr.Character.HumanoidRootPart.CFrame
-                    end
-                end
-                wait(rnd(0.5, 1))
-            end
-        end
-    })
-
-    --- ESP TAB ---
-    local espTab = Window:MakeTab({
-        Name = "ESP",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    espTab:AddToggle({
-        Name = "Enable ESP",
-        Default = false,
-        Callback = function(state)
-            settings.espEnabled = state
-            while settings.espEnabled do
-                for _, player in pairs(players:GetPlayers()) do
-                    if player ~= plr and player.Character then
-                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                        highlight.FillColor = Color3.new(rnd(0, 1), rnd(0, 1), rnd(0, 1))
-                        highlight.OutlineColor = Color3.new(1, 1, 1)
-                    end
-                end
-                wait(rnd(0.3, 0.5))
-            end
-        end
-    })
+    local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    flyingTab:AddButton({ Name = "Fly", Callback = startFly })
+    flyingTab:AddButton({ Name = "Unfly", Callback = stopFly })
 
     --- CREDITS TAB ---
-    local creditsTab = Window:MakeTab({
-        Name = "Credits",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
-
-    creditsTab:AddLabel("Development by yooo0684 on DC")
+    local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    creditsTab:AddLabel("Developed by yooo0684 on Discord")
     creditsTab:AddButton({
         Name = "Join Discord",
         Callback = function()
@@ -271,6 +226,6 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Finish UI Setup
+    -- Initialize the UI
     OrionLib:Init()
 end
