@@ -180,6 +180,62 @@ if game.PlaceId == 11177482306 then
         end
     })
 
+    -- Combat Tab
+    local combatTab = Window:MakeTab({
+        Name = "Combat",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Infinite Ammo Toggle
+    combatTab:AddToggle({
+        Name = "Infinite Ammo",
+        Default = false,
+        Callback = function(state)
+            _G.infiniteAmmo = state
+            if state then
+                while _G.infiniteAmmo do
+                    for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                        if tool:FindFirstChild("Ammo") then
+                            tool.Ammo.Value = math.huge
+                        end
+                    end
+                    wait(0.1)
+                end
+            end
+        end
+    })
+
+    -- Trolling Tab
+    local trollingTab = Window:MakeTab({
+        Name = "Trolling",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- One Punch Toggle
+    trollingTab:AddToggle({
+        Name = "One Punch Kill",
+        Default = false,
+        Callback = function(state)
+            _G.onePunch = state
+            while _G.onePunch do
+                -- Make players' health zero on collision
+                game.Players.PlayerAdded:Connect(function(player)
+                    player.CharacterAdded:Connect(function(character)
+                        local humanoid = character:FindFirstChildOfClass("Humanoid")
+                        if humanoid then
+                            humanoid.HealthChanged:Connect(function()
+                                humanoid.Health = 0
+                            end)
+                        end
+                    end)
+                end)
+                wait(0.1)
+            end
+        end
+    })
+
     -- Farming Tab
     local farmingTab = Window:MakeTab({
         Name = "Farming",
@@ -271,5 +327,3 @@ if game.PlaceId == 11177482306 then
     })
 
     -- Finish UI Setup
-    OrionLib:Init()
-end
