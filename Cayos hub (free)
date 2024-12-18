@@ -94,16 +94,59 @@ if game.PlaceId == 11177482306 then
     playerTab:AddButton({ Name = "Fly", Callback = startFly })
     playerTab:AddButton({ Name = "Unfly", Callback = stopFly })
 
-    -- God Mode
+    -- Improved God Mode
     local function enableGodMode()
         local character = plr.Character or plr.CharacterAdded:Wait()
         local humanoid = character:FindFirstChildOfClass("Humanoid")
+
         if humanoid then
+            -- Health Lock
             humanoid:GetPropertyChangedSignal("Health"):Connect(function()
                 if humanoid.Health < humanoid.MaxHealth then
                     humanoid.Health = humanoid.MaxHealth
                 end
             end)
+
+            humanoid.Health = humanoid.MaxHealth  -- Ensure full health initially
+
+            -- Remove damage scripts
+            for _, descendant in pairs(character:GetDescendants()) do
+                if descendant:IsA("Script") or descendant:IsA("LocalScript") then
+                    if string.find(descendant.Name:lower(), "damage") or descendant.Source:match("damage") then
+                        descendant:Destroy()
+                    end
+                end
+            end
+
+            -- Block new damage scripts
+            character.DescendantAdded:Connect(function(descendant)
+                if descendant:IsA("Script") or descendant:IsA("LocalScript") then
+                    if string.find(descendant.Name:lower(), "damage") then
+                        descendant:Destroy()
+                    end
+                end
+            end)
+
+            -- Block damage events
+            local root = character:FindFirstChild("HumanoidRootPart")
+            if root then
+                root.ChildAdded:Connect(function(child)
+                    if child:IsA("Script") or child:IsA("LocalScript") then
+                        if string.find(child.Name:lower(), "damage") then
+                            child:Destroy()
+                        end
+                    end
+                end)
+            end
+        end
+    end
+
+    local function disableGodMode()
+        local character = plr.Character or plr.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            humanoid:SetAttribute("GodMode", false)
         end
     end
 
@@ -112,7 +155,11 @@ if game.PlaceId == 11177482306 then
         Default = false,
         Callback = function(state)
             settings.godMode = state
-            if state then enableGodMode() end
+            if state then
+                enableGodMode()
+            else
+                disableGodMode()
+            end
         end
     })
 
