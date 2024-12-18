@@ -42,17 +42,7 @@ if game.PlaceId == 11177482306 then
             local humanoid = character:FindFirstChildOfClass("Humanoid")
             if humanoid then
                 humanoid.Health = 0 -- Instantly set health to zero
-            else
-                warn("Humanoid not found in target player.")
             end
-        end
-    end
-
-    -- Custom Health Integration (Placeholder)
-    local function restoreHealth(character)
-        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.Health = humanoid.MaxHealth
         end
     end
 
@@ -62,7 +52,10 @@ if game.PlaceId == 11177482306 then
         while settings.godMode do
             local character = plr.Character
             if character then
-                restoreHealth(character)
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = humanoid.MaxHealth -- Continuously restore health
+                end
             end
             wait(0.1)
         end
