@@ -114,7 +114,7 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- God Mode (Updated)
+    -- God Mode (Updated to work around custom damage scripts)
     local function enableGodMode()
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
@@ -189,12 +189,24 @@ if game.PlaceId == 11177482306 then
 
     -- Auto Farm Toggle
     farmingTab:AddToggle({
-        Name = "Auto Farm",
+        Name = "Auto Mop Farm",
         Default = false,
         Callback = function(state)
             _G.autoFarm = state
             while _G.autoFarm do
-                -- Farming Logic
+                -- Mop Farm Logic (interacts with Paki Grocer)
+                local mop = game.Players.LocalPlayer.Backpack:FindFirstChild("Mop")
+                if mop then
+                    -- Use the mop to clean floor spots (Triggering mop interaction)
+                    local mopTool = game.Players.LocalPlayer.Backpack.Mop
+                    local character = game.Players.LocalPlayer.Character
+                    local root = character and character:FindFirstChild("HumanoidRootPart")
+
+                    if root then
+                        -- Simulate cleaning process
+                        game:GetService("ReplicatedStorage").Remote:FireServer(mopTool, "Use", root.CFrame)
+                    end
+                end
                 wait(0.1)
             end
         end
