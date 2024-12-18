@@ -187,7 +187,7 @@ if game.PlaceId == 11177482306 then
         PremiumOnly = false
     })
 
-    -- Auto Farm Toggle
+    -- Auto Mop Farm
     farmingTab:AddToggle({
         Name = "Auto Mop Farm",
         Default = false,
