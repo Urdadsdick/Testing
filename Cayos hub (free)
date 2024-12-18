@@ -17,7 +17,8 @@ if game.PlaceId == 11177482306 then
         walkSpeed = 16,
         espEnabled = false,
         infiniteAmmo = false,
-        godMode = false
+        godMode = false,
+        flyEnabled = false
     }
 
     -- Player Tab
@@ -113,7 +114,7 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- God Mode
+    -- God Mode (Updated)
     local function enableGodMode()
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
@@ -179,7 +180,77 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Add other tabs like Farming, ESP, Trolling, Credits, etc.
+    -- Farming Tab
+    local farmingTab = Window:MakeTab({
+        Name = "Farming",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Auto Farm Toggle
+    farmingTab:AddToggle({
+        Name = "Auto Farm",
+        Default = false,
+        Callback = function(state)
+            _G.autoFarm = state
+            while _G.autoFarm do
+                -- Farming Logic
+                wait(0.1)
+            end
+        end
+    })
+
+    -- Auto Pickup Toggle
+    farmingTab:AddToggle({
+        Name = "Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            _G.autoPickup = state
+            while _G.autoPickup do
+                for _, item in pairs(game.Workspace:GetChildren()) do
+                    if item:IsA("Tool") or item.Name == "Cash" then
+                        item.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                    end
+                end
+                wait(0.5)
+            end
+        end
+    })
+
+    -- ESP Tab
+    local espTab = Window:MakeTab({
+        Name = "ESP",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- ESP Toggle
+    espTab:AddToggle({
+        Name = "Enable ESP",
+        Default = false,
+        Callback = function(state)
+            _G.espEnabled = state
+            while _G.espEnabled do
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                        highlight.FillColor = Color3.new(0, 1, 0)
+                        highlight.OutlineColor = Color3.new(1, 1, 1)
+                    end
+                end
+                wait(0.5)
+            end
+        end
+    })
+
+    -- Credits Tab
+    local creditsTab = Window:MakeTab({
+        Name = "Credits",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    creditsTab:AddLabel("Development by yooo0684 on DC")
 
     -- Finish UI Setup
     OrionLib:Init()
