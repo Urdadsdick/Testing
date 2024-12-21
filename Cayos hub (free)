@@ -139,28 +139,38 @@ if game.PlaceId == 11177482306 then
         end
     })
 
-    -- Add Level Changer
+    -- Add Level Setter Feature
     playerTab:AddTextbox({
-        Name = "Set Level",
+        Name = "Set Level (Client-Side Only)",
         Default = "1",
         TextDisappear = true,
         Callback = function(value)
             local character = plr.Character
             if character then
-                -- Client-side visual level setting (not server-side)
-                local levelTag = character:FindFirstChild("LevelTag") or Instance.new("BillboardGui", character)
-                levelTag.Name = "LevelTag"
-                levelTag.Size = UDim2.new(0, 200, 0, 50)
-                levelTag.StudsOffset = Vector3.new(0, 3, 0)
-                levelTag.Adornee = character:FindFirstChild("Head")
+                -- Check if a level display already exists, else create one
+                local levelTag = character:FindFirstChild("LevelTag")
+                if not levelTag then
+                    levelTag = Instance.new("BillboardGui", character)
+                    levelTag.Name = "LevelTag"
+                    levelTag.Size = UDim2.new(0, 200, 0, 50)
+                    levelTag.StudsOffset = Vector3.new(0, 3, 0) -- Position above player's head
+                    levelTag.Adornee = character:FindFirstChild("Head")
 
-                local textLabel = levelTag:FindFirstChild("TextLabel") or Instance.new("TextLabel", levelTag)
-                textLabel.Size = UDim2.new(1, 0, 1, 0)
-                textLabel.BackgroundTransparency = 1
-                textLabel.Text = "Level: " .. tostring(value)
-                textLabel.Font = Enum.Font.GothamBold
-                textLabel.TextColor3 = Color3.new(1, 1, 1)
-                textLabel.TextScaled = true
+                    local textLabel = Instance.new("TextLabel", levelTag)
+                    textLabel.Name = "TextLabel"
+                    textLabel.Size = UDim2.new(1, 0, 1, 0)
+                    textLabel.BackgroundTransparency = 1
+                    textLabel.Text = "Level: " .. tostring(value)
+                    textLabel.Font = Enum.Font.GothamBold
+                    textLabel.TextColor3 = Color3.new(1, 1, 1)
+                    textLabel.TextScaled = true
+                else
+                    -- Update existing level display
+                    local textLabel = levelTag:FindFirstChild("TextLabel")
+                    if textLabel then
+                        textLabel.Text = "Level: " .. tostring(value)
+                    end
+                end
             end
         end
     })
