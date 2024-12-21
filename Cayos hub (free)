@@ -139,6 +139,32 @@ if game.PlaceId == 11177482306 then
         end
     })
 
+    -- Add Level Changer
+    playerTab:AddTextbox({
+        Name = "Set Level",
+        Default = "1",
+        TextDisappear = true,
+        Callback = function(value)
+            local character = plr.Character
+            if character then
+                -- Client-side visual level setting (not server-side)
+                local levelTag = character:FindFirstChild("LevelTag") or Instance.new("BillboardGui", character)
+                levelTag.Name = "LevelTag"
+                levelTag.Size = UDim2.new(0, 200, 0, 50)
+                levelTag.StudsOffset = Vector3.new(0, 3, 0)
+                levelTag.Adornee = character:FindFirstChild("Head")
+
+                local textLabel = levelTag:FindFirstChild("TextLabel") or Instance.new("TextLabel", levelTag)
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.BackgroundTransparency = 1
+                textLabel.Text = "Level: " .. tostring(value)
+                textLabel.Font = Enum.Font.GothamBold
+                textLabel.TextColor3 = Color3.new(1, 1, 1)
+                textLabel.TextScaled = true
+            end
+        end
+    })
+
     --- FARMING TAB ---
     local farmingTab = Window:MakeTab({ Name = "Farming", Icon = "rbxassetid://4483345998", PremiumOnly = false })
 
