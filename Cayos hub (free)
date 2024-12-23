@@ -12,66 +12,6 @@ if not success then
     return
 end
 
--- Key System Function
-local function showKeyPrompt()
-    local keyInput = nil
-    local Window = OrionLib:MakeWindow({
-        Name = "Goated Hub - Key System",
-        HidePremium = false,
-        SaveConfig = false,
-        ConfigFolder = "GoatedHub"
-    })
-
-    local keyTab = Window:MakeTab({ Name = "Key System", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-    
-    keyTab:AddTextbox({
-        Name = "Enter Key",
-        Default = "",
-        TextDisappear = false,
-        Callback = function(value)
-            keyInput = value
-        end
-    })
-    
-    keyTab:AddButton({
-        Name = "Submit Key",
-        Callback = function()
-            if keyInput == keyRequired then
-                OrionLib:MakeNotification({
-                    Name = "Success",
-                    Content = "Key Accepted! Loading Goated Hub...",
-                    Image = "rbxassetid://4483345998",
-                    Time = 5
-                })
-                Window:Destroy()
-                loadScriptFeatures()
-            else
-                OrionLib:MakeNotification({
-                    Name = "Error",
-                    Content = "Invalid Key. Try Again!",
-                    Image = "rbxassetid://4483345998",
-                    Time = 5
-                })
-            end
-        end
-    })
-    
-    keyTab:AddButton({
-        Name = "Get Key",
-        Callback = function()
-            setclipboard(keyUrl)
-            OrionLib:MakeNotification({
-                Name = "Key Copied",
-                Content = "Key link copied to clipboard!",
-                Image = "rbxassetid://4483345998",
-                Time = 5
-            })
-        end
-    })
-
-    OrionLib:Init()
-end
-
 -- Features Function
 function loadScriptFeatures()
     local Window = OrionLib:MakeWindow({
@@ -220,6 +160,66 @@ function loadScriptFeatures()
         Name = "Join Discord",
         Callback = function()
             setclipboard("https://discord.gg/ADQUB6W7")
+        end
+    })
+
+    OrionLib:Init()
+end
+
+-- Key System Function
+local function showKeyPrompt()
+    local keyInput = nil
+    local Window = OrionLib:MakeWindow({
+        Name = "Goated Hub - Key System",
+        HidePremium = false,
+        SaveConfig = false,
+        ConfigFolder = "GoatedHub"
+    })
+
+    local keyTab = Window:MakeTab({ Name = "Key System", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    
+    keyTab:AddTextbox({
+        Name = "Enter Key",
+        Default = "",
+        TextDisappear = false,
+        Callback = function(value)
+            keyInput = value
+        end
+    })
+    
+    keyTab:AddButton({
+        Name = "Submit Key",
+        Callback = function()
+            if keyInput == keyRequired then
+                OrionLib:MakeNotification({
+                    Name = "Success",
+                    Content = "Key Accepted! Loading Goated Hub...",
+                    Image = "rbxassetid://4483345998",
+                    Time = 5
+                })
+                Window:Destroy()
+                loadScriptFeatures()
+            else
+                OrionLib:MakeNotification({
+                    Name = "Error",
+                    Content = "Invalid Key. Try Again!",
+                    Image = "rbxassetid://4483345998",
+                    Time = 5
+                })
+            end
+        end
+    })
+    
+    keyTab:AddButton({
+        Name = "Get Key",
+        Callback = function()
+            setclipboard(keyUrl)
+            OrionLib:MakeNotification({
+                Name = "Key Copied",
+                Content = "Key link copied to clipboard!",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
         end
     })
 
