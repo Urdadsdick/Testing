@@ -1,8 +1,8 @@
--- Simple Key System
+-- New Key System
 local keyRequired = "GoatedHub123"  -- The key that must be entered to unlock the script
 local keyUrl = "https://discord.gg/ADQUB6W7"  -- Link for "Get Key"
 
--- Function to initialize script after key is entered
+-- Function to initialize the script's features
 local function loadScriptFeatures()
     -- Load the Orion library
     local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
@@ -169,7 +169,7 @@ local function loadScriptFeatures()
             settings.walkSpeed = value
             local character = plr.Character
             if character then
-                local humanoid = character:FindFirstChild("Humanoid")
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
                 if humanoid then humanoid.WalkSpeed = value end
             end
         end
@@ -250,7 +250,7 @@ local function loadScriptFeatures()
     OrionLib:Init()
 end
 
--- Key System for Validation
+-- New Key System for Validation
 local function keySystem()
     -- Create a simple key prompt
     local prompt = Instance.new("ScreenGui")
@@ -273,4 +273,24 @@ local function keySystem()
     submitButton.Size = UDim2.new(0, 400, 0, 50)
     submitButton.Position = UDim2.new(0.5, -200, 0.5, 30)
     submitButton.Text = "Submit Key"
-    submitButton.TextColor3 = Color3
+    submitButton.TextColor3 = Color3.new(1, 1, 1)
+    submitButton.BackgroundTransparency = 0.5
+    submitButton.BackgroundColor3 = Color3.new(0, 0, 0)
+
+    -- Key submission event
+    submitButton.MouseButton1Click:Connect(function()
+        if textBox.Text == keyRequired then
+            prompt:Destroy()
+            loadScriptFeatures()  -- Proceed to load features if key is correct
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Key",
+                Text = "The key you entered is incorrect.",
+                Duration = 5
+            })
+        end
+    end)
+end
+
+-- Trigger the key system at the start
+keySystem()
