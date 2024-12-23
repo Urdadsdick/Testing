@@ -1,191 +1,243 @@
 -- Key System Setup
-local keyRequired = "GoatedHub123" -- Change this if you'd like
-local keyUrl = "https://discord.gg/ADQUB6W7"
+local keyRequired = "GoatedHub123" -- Set the required key
+local keyUrl = "https://discord.gg/ADQUB6W7" -- Link for "Get Key"
 
--- Key Prompt
-local function checkKey()
-    local keyInput = nil
-    while keyInput ~= keyRequired do
-        keyInput = tostring(game:GetService("Players").LocalPlayer:Request("Enter Key", "Key Required to Load GoatedHub", "", "Input")):gsub("\n", "")
-        if keyInput == "Get Key" then
-            setclipboard(keyUrl)
-            print("Key link copied to clipboard.")
-        elseif keyInput ~= keyRequired then
-            print("Invalid key. Try again or press 'Get Key' for help.")
-        end
-    end
-end
-
--- Begin Script Only If Correct Key
-checkKey()
-
--- Orion UI Library Setup
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-local Window = OrionLib:MakeWindow({
-    Name = "Goated Hub",
-    HidePremium = false,
-    SaveConfig = true,
-    ConfigFolder = "GoatedHub"
-})
-
--- Services and Player References
+-- Services
 local getService = function(name) return game:GetService(name) end
-local runService = getService("RunService")
 local players = getService("Players")
 local replicatedStorage = getService("ReplicatedStorage")
 local workspace = getService("Workspace")
 local plr = players.LocalPlayer
 
--- Settings
-local settings = {
-    autoFarm = false,
-    autoPickup = false,
-    walkSpeed = 16,
-    espEnabled = false,
-    godMode = false,
-    flyEnabled = false,
-    onePunch = false
-}
+-- Load Orion Library
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
--- Functions for Each Feature
-local function enableGodMode()
-    settings.godMode = true
-    while settings.godMode do
-        local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.Health = humanoid.MaxHealth
+-- Key UI Setup
+local function showKeyPrompt()
+    local keyInput = nil
+    local Window = OrionLib:MakeWindow({
+        Name = "Goated Hub - Key System",
+        HidePremium = false,
+        SaveConfig = false,
+        ConfigFolder = "GoatedHub"
+    })
+
+    local keyTab = Window:MakeTab({ Name = "Key System", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    
+    keyTab:AddTextbox({
+        Name = "Enter Key",
+        Default = "",
+        TextDisappear = false,
+        Callback = function(value)
+            keyInput = value
         end
-        wait(0.1)
-    end
+    })
+    
+    keyTab:AddButton({
+        Name = "Submit Key",
+        Callback = function()
+            if keyInput == keyRequired then
+                OrionLib:MakeNotification({
+                    Name = "Success",
+                    Content = "Key Accepted! Loading Goated Hub...",
+                    Image = "rbxassetid://4483345998",
+                    Time = 5
+                })
+                Window:Destroy()
+                loadScriptFeatures()
+            else
+                OrionLib:MakeNotification({
+                    Name = "Error",
+                    Content = "Invalid Key. Try Again!",
+                    Image = "rbxassetid://4483345998",
+                    Time = 5
+                })
+            end
+        end
+    })
+    
+    keyTab:AddButton({
+        Name = "Get Key",
+        Callback = function()
+            setclipboard(keyUrl)
+            OrionLib:MakeNotification({
+                Name = "Key Copied",
+                Content = "Key link copied to clipboard!",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
+        end
+    })
+
+    OrionLib:Init()
 end
 
-local function disableGodMode()
-    settings.godMode = false
-end
+-- Features Loader
+function loadScriptFeatures()
+    local Window = OrionLib:MakeWindow({
+        Name = "Goated Hub",
+        HidePremium = false,
+        SaveConfig = true,
+        ConfigFolder = "GoatedHub"
+    })
 
-local function enableAutoPickup()
-    settings.autoPickup = true
-    while settings.autoPickup do
-        for _, item in pairs(workspace:GetDescendants()) do
-            if item:IsA("Tool") or item.Name == "Cash" then
+    --- PLAYER FEATURES ---
+    local playerTab = Window:MakeTab({ Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    playerTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Default = 16,
+        Increment = 1,
+        Callback = function(value)
+            local humanoid = plr.Character and plr.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = value
+            end
+        end
+    })
+
+    playerTab:AddToggle({
+        Name = "God Mode",
+        Default = false,
+        Callback = function(state)
+            while state do
+                local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = humanoid.MaxHealth
+                end
+                wait(0.1)
+            end
+        end
+    })
+
+    playerTab:AddToggle({
+        Name = "One Punch Kill",
+        Default = false,
+        Callback = function(state)
+            while state do
+                for _, player in pairs(players:GetPlayers()) do
+                    if player ~= plr and player.Character then
+                        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                        if humanoid then
+                            humanoid.Health = 0
+                        end
+                    end
+                end
+                wait(0.1)
+            end
+        end
+    })
+
+    --- FARMING FEATURES ---
+    local farmingTab = Window:MakeTab({ Name = "Farming", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    farmingTab:AddToggle({
+        Name = "Auto Mop Farm",
+        Default = false,
+        Callback = function(state)
+            while state do
+                local mop = plr.Backpack:FindFirstChild("Mop")
+                if mop then
+                    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        replicatedStorage.Remote:FireServer(mop, "Use", root.CFrame)
+                    end
+                end
+                wait(0.1)
+            end
+        end
+    })
+
+    farmingTab:AddToggle({
+        Name = "Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            while state do
                 local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
                 if root then
-                    pcall(function()
-                        item.CFrame = root.CFrame
-                    end)
+                    for _, item in pairs(workspace:GetDescendants()) do
+                        if item:IsA("Tool") or item.Name == "Cash" then
+                            pcall(function()
+                                item.CFrame = root.CFrame
+                            end)
+                        end
+                    end
                 end
+                wait(0.5)
             end
         end
-        wait(0.5)
-    end
-end
+    })
 
-local function disableAutoPickup()
-    settings.autoPickup = false
-end
+    --- ESP FEATURES ---
+    local espTab = Window:MakeTab({ Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false })
 
-local function enableESP()
-    settings.espEnabled = true
-    while settings.espEnabled do
-        for _, player in pairs(players:GetPlayers()) do
-            if player ~= plr and player.Character then
-                local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                highlight.FillColor = Color3.new(math.random(), math.random(), math.random())
-                highlight.OutlineColor = Color3.new(1, 1, 1)
+    espTab:AddToggle({
+        Name = "Enable ESP",
+        Default = false,
+        Callback = function(state)
+            while state do
+                for _, player in pairs(players:GetPlayers()) do
+                    if player ~= plr and player.Character then
+                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                        highlight.FillColor = Color3.new(math.random(), math.random(), math.random())
+                        highlight.OutlineColor = Color3.new(1, 1, 1)
+                    end
+                end
+                wait(0.3)
             end
         end
-        wait(0.3)
+    })
+
+    --- FLYING FEATURES ---
+    local flying = false
+    local function startFly()
+        if flying then return end
+        flying = true
+        local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local bodyGyro = Instance.new("BodyGyro", root)
+        local bodyVelocity = Instance.new("BodyVelocity", root)
+
+        bodyGyro.P = 9e4
+        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bodyGyro.CFrame = root.CFrame
+
+        bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bodyVelocity.Velocity = Vector3.zero
+
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if flying then
+                bodyGyro.CFrame = root.CFrame
+                bodyVelocity.Velocity = root.CFrame.LookVector * 50
+            else
+                bodyGyro:Destroy()
+                bodyVelocity:Destroy()
+            end
+        end)
     end
-end
 
-local function disableESP()
-    settings.espEnabled = false
-end
+    local function stopFly() flying = false end
 
-local function startFly()
-    if settings.flyEnabled then return end
-    settings.flyEnabled = true
-    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+    local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    flyingTab:AddButton({ Name = "Fly", Callback = startFly })
+    flyingTab:AddButton({ Name = "Unfly", Callback = stopFly })
 
-    local bodyGyro = Instance.new("BodyGyro", root)
-    local bodyVelocity = Instance.new("BodyVelocity", root)
-
-    bodyGyro.P = 9e4
-    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bodyGyro.CFrame = root.CFrame
-
-    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    bodyVelocity.Velocity = root.CFrame.LookVector * 50
-
-    runService.RenderStepped:Connect(function()
-        if settings.flyEnabled then
-            bodyGyro.CFrame = root.CFrame
-            bodyVelocity.Velocity = root.CFrame.LookVector * 50
-        else
-            bodyGyro:Destroy()
-            bodyVelocity:Destroy()
+    --- CREDITS ---
+    local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    creditsTab:AddLabel("Developed by yooo0684 on Discord")
+    creditsTab:AddButton({
+        Name = "Join Discord",
+        Callback = function()
+            setclipboard("https://discord.gg/DvgnsUp3")
         end
-    end)
+    })
+
+    -- Initialize UI
+    OrionLib:Init()
 end
 
-local function stopFly()
-    settings.flyEnabled = false
-end
-
--- Tabs and Features in Orion
-local playerTab = Window:MakeTab({ Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-
-playerTab:AddSlider({
-    Name = "Walk Speed",
-    Min = 16,
-    Max = 100,
-    Default = 16,
-    Increment = 1,
-    Callback = function(value)
-        settings.walkSpeed = value
-        local humanoid = plr.Character and plr.Character:FindFirstChild("Humanoid")
-        if humanoid then humanoid.WalkSpeed = value end
-    end
-})
-
-playerTab:AddToggle({
-    Name = "God Mode",
-    Default = false,
-    Callback = function(state)
-        if state then enableGodMode() else disableGodMode() end
-    end
-})
-
-playerTab:AddToggle({
-    Name = "Auto Pickup",
-    Default = false,
-    Callback = function(state)
-        if state then enableAutoPickup() else disableAutoPickup() end
-    end
-})
-
-local espTab = Window:MakeTab({ Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-espTab:AddToggle({
-    Name = "Enable ESP",
-    Default = false,
-    Callback = function(state)
-        if state then enableESP() else disableESP() end
-    end
-})
-
-local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-flyingTab:AddButton({ Name = "Fly", Callback = startFly })
-flyingTab:AddButton({ Name = "Unfly", Callback = stopFly })
-
-local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-creditsTab:AddLabel("Developed by yooo0684 on Discord")
-creditsTab:AddButton({
-    Name = "Get Key",
-    Callback = function()
-        setclipboard(keyUrl)
-        print("Key link copied to clipboard.")
-    end
-})
-
-OrionLib:Init()
+-- Show Key System on Execution
+showKeyPrompt()
