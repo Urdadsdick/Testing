@@ -1,27 +1,24 @@
--- Key System Setup
-local keyRequired = "GoatedHub123" -- Set the required key
-local keyUrl = "https://discord.gg/ADQUB6W7" -- Link for "Get Key"
+-- Simple Key System
+local keyRequired = "GoatedHub123"  -- The key that must be entered to unlock the script
+local keyUrl = "https://discord.gg/ADQUB6W7"  -- Link for "Get Key"
 
--- Load Orion Library
-local success, OrionLib = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-end)
-
-if not success then
-    warn("Failed to load Orion Library.")
-    return
-end
-
--- Function to load all features after key is entered
-function loadScriptFeatures()
+-- Function to initialize script after key is entered
+local function loadScriptFeatures()
+    -- Load the Orion library
+    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
     local Window = OrionLib:MakeWindow({
-        Name = "Goated Hub",
+        Name = "Goated Hub - Key System",
         HidePremium = false,
         SaveConfig = true,
         ConfigFolder = "GoatedHub"
     })
+    
+    -- Player Settings
+    local players = game:GetService("Players")
+    local plr = players.LocalPlayer
+    local workspace = game:GetService("Workspace")
+    local replicatedStorage = game:GetService("ReplicatedStorage")
 
-    -- Global Settings
     local settings = {
         walkSpeed = 16,
         godMode = false,
@@ -32,7 +29,12 @@ function loadScriptFeatures()
         flyEnabled = false
     }
 
+    -- Utility: Dynamic Random Delay
+    local random = Random.new()
+    local function rnd(min, max) return random:NextNumber(min, max) end
+
     --- CORE FUNCTIONS ---
+
     -- Custom Damage Integration (Bypassing)
     local function dealDamage(targetPlayer)
         local character = targetPlayer and targetPlayer.Character
@@ -48,7 +50,7 @@ function loadScriptFeatures()
     local function enableGodMode()
         settings.godMode = true
         while settings.godMode do
-            local character = game.Players.LocalPlayer.Character
+            local character = plr.Character
             if character then
                 local humanoid = character:FindFirstChildOfClass("Humanoid")
                 if humanoid then
@@ -67,12 +69,12 @@ function loadScriptFeatures()
     local function enableOnePunch()
         settings.onePunch = true
         while settings.onePunch do
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= game.Players.LocalPlayer and player.Character then
+            for _, player in pairs(players:GetPlayers()) do
+                if player ~= plr and player.Character then
                     dealDamage(player) -- Use bypassed damage logic
                 end
             end
-            wait(0.1)
+            wait(rnd(0.1, 0.3))
         end
     end
 
@@ -84,7 +86,7 @@ function loadScriptFeatures()
     local function enableAutoPickup()
         settings.autoPickup = true
         while settings.autoPickup do
-            local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
             if root then
                 for _, item in pairs(workspace:GetDescendants()) do
                     if item:IsA("Tool") or item.Name == "Cash" then
@@ -94,7 +96,7 @@ function loadScriptFeatures()
                     end
                 end
             end
-            wait(0.5)
+            wait(rnd(0.5, 1))
         end
     end
 
@@ -102,99 +104,31 @@ function loadScriptFeatures()
         settings.autoPickup = false
     end
 
-    --- PLAYER FEATURES ---
-    local playerTab = Window:MakeTab({ Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-
-    playerTab:AddSlider({
-        Name = "Walk Speed",
-        Min = 16,
-        Max = 100,
-        Default = 16,
-        Increment = 1,
-        Callback = function(value)
-            settings.walkSpeed = value
-            local character = game.Players.LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChild("Humanoid")
-                if humanoid then humanoid.WalkSpeed = value end
-            end
-        end
-    })
-
-    playerTab:AddToggle({
-        Name = "God Mode",
-        Default = false,
-        Callback = function(state)
-            if state then enableGodMode() else disableGodMode() end
-        end
-    })
-
-    playerTab:AddToggle({
-        Name = "One Punch Kill",
-        Default = false,
-        Callback = function(state)
-            if state then enableOnePunch() else disableOnePunch() end
-        end
-    })
-
-    playerTab:AddToggle({
-        Name = "Auto Pickup",
-        Default = false,
-        Callback = function(state)
-            if state then enableAutoPickup() else disableAutoPickup() end
-        end
-    })
-
-    --- FARMING FEATURES ---
-    local farmingTab = Window:MakeTab({ Name = "Farming", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-
-    farmingTab:AddToggle({
-        Name = "Auto Mop Farm",
-        Default = false,
-        Callback = function(state)
-            settings.autoFarm = state
-            while settings.autoFarm do
-                local mop = game.Players.LocalPlayer.Backpack:FindFirstChild("Mop")
-                if mop then
-                    local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        game.ReplicatedStorage.Remote:FireServer(mop, "Use", root.CFrame)
-                    end
+    -- ESP (Highlighting)
+    local function enableESP()
+        settings.espEnabled = true
+        while settings.espEnabled do
+            for _, player in pairs(players:GetPlayers()) do
+                if player ~= plr and player.Character then
+                    local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                    highlight.FillColor = Color3.new(rnd(0, 1), rnd(0, 1), rnd(0, 1))
+                    highlight.OutlineColor = Color3.new(1, 1, 1)
                 end
-                wait(0.1)
             end
+            wait(rnd(0.3, 0.5))
         end
-    })
+    end
 
-    --- ESP FEATURES ---
-    local espTab = Window:MakeTab({ Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    local function disableESP()
+        settings.espEnabled = false
+    end
 
-    espTab:AddToggle({
-        Name = "Enable ESP",
-        Default = false,
-        Callback = function(state)
-            settings.espEnabled = state
-            while settings.espEnabled do
-                for _, player in pairs(game.Players:GetPlayers()) do
-                    if player ~= game.Players.LocalPlayer and player.Character then
-                        local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                        highlight.FillColor = Color3.new(math.random(), math.random(), math.random())
-                        highlight.OutlineColor = Color3.new(1, 1, 1)
-                    end
-                end
-                wait(0.5)
-            end
-        end
-    })
-
-    --- FLYING FEATURES ---
-    local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-
+    -- Flying
     local flying = false
     local function startFly()
         if flying then return end
         flying = true
-        local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
         if not root then return end
 
         local bodyGyro = Instance.new("BodyGyro", root)
@@ -222,87 +156,121 @@ function loadScriptFeatures()
         flying = false
     end
 
-    flyingTab:AddButton({
-        Name = "Fly",
-        Callback = startFly
-    })
-    flyingTab:AddButton({
-        Name = "Unfly",
-        Callback = stopFly
-    })
+    --- PLAYER TAB ---
+    local playerTab = Window:MakeTab({ Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false })
 
-    --- CREDITS ---
-    local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-    creditsTab:AddLabel("Developed by yooo0684")
-    creditsTab:AddButton({
-        Name = "Join Discord",
-        Callback = function()
-            setclipboard("https://discord.gg/ADQUB6W7")
-        end
-    })
-
-    OrionLib:Init()
-end
-
--- Key System Function (Simple Input Check)
-local function keySystem()
-    local inputKey = ""
-    local Window = OrionLib:MakeWindow({
-        Name = "Goated Hub - Key System",
-        HidePremium = false,
-        SaveConfig = false,
-        ConfigFolder = "GoatedHub"
-    })
-
-    local keyTab = Window:MakeTab({ Name = "Key System", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-    
-    keyTab:AddTextbox({
-        Name = "Enter Key",
-        Default = "",
-        TextDisappear = false,
+    playerTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Default = 16,
+        Increment = 1,
         Callback = function(value)
-            inputKey = value
-        end
-    })
-    
-    keyTab:AddButton({
-        Name = "Submit Key",
-        Callback = function()
-            if inputKey == keyRequired then
-                OrionLib:MakeNotification({
-                    Name = "Success",
-                    Content = "Key Accepted! Loading Goated Hub...",
-                    Image = "rbxassetid://4483345998",
-                    Time = 5
-                })
-                Window:Destroy()
-                loadScriptFeatures()
-            else
-                OrionLib:MakeNotification({
-                    Name = "Error",
-                    Content = "Invalid Key. Try Again!",
-                    Image = "rbxassetid://4483345998",
-                    Time = 5
-                })
+            settings.walkSpeed = value
+            local character = plr.Character
+            if character then
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then humanoid.WalkSpeed = value end
             end
         end
     })
-    
-    keyTab:AddButton({
-        Name = "Get Key",
-        Callback = function()
-            setclipboard(keyUrl)
-            OrionLib:MakeNotification({
-                Name = "Key Copied",
-                Content = "Key link copied to clipboard!",
-                Image = "rbxassetid://4483345998",
-                Time = 5
-            })
+
+    playerTab:AddToggle({
+        Name = "God Mode",
+        Default = false,
+        Callback = function(state)
+            if state then enableGodMode() else disableGodMode() end
         end
     })
 
+    playerTab:AddToggle({
+        Name = "One Punch Kill",
+        Default = false,
+        Callback = function(state)
+            if state then enableOnePunch() else disableOnePunch() end
+        end
+    })
+
+    --- FARMING TAB ---
+    local farmingTab = Window:MakeTab({ Name = "Farming", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    farmingTab:AddToggle({
+        Name = "Auto Mop Farm",
+        Default = false,
+        Callback = function(state)
+            settings.autoFarm = state
+            while settings.autoFarm do
+                local mop = plr.Backpack:FindFirstChild("Mop")
+                if mop then
+                    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        replicatedStorage.Remote:FireServer(mop, "Use", root.CFrame)
+                    end
+                end
+                wait(rnd(0.1, 0.3))
+            end
+        end
+    })
+
+    farmingTab:AddToggle({
+        Name = "Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            if state then enableAutoPickup() else disableAutoPickup() end
+        end
+    })
+
+    --- ESP TAB ---
+    local espTab = Window:MakeTab({ Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    espTab:AddToggle({
+        Name = "Enable ESP",
+        Default = false,
+        Callback = function(state)
+            if state then enableESP() else disableESP() end
+        end
+    })
+
+    --- FLYING TAB ---
+    local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    flyingTab:AddButton({ Name = "Fly", Callback = startFly })
+    flyingTab:AddButton({ Name = "Unfly", Callback = stopFly })
+
+    --- CREDITS TAB ---
+    local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    creditsTab:AddLabel("Developed by yooo0684 on Discord")
+    creditsTab:AddButton({
+        Name = "Join Discord",
+        Callback = function()
+            setclipboard("https://discord.gg/DvgnsUp3")
+        end
+    })
+
+    -- Initialize the UI
     OrionLib:Init()
 end
 
--- Show Key System on Execution
-keySystem()
+-- Key System for Validation
+local function keySystem()
+    -- Create a simple key prompt
+    local prompt = Instance.new("ScreenGui")
+    prompt.Name = "KeyPrompt"
+    prompt.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    -- Creating a text box for entering the key
+    local textBox = Instance.new("TextBox")
+    textBox.Parent = prompt
+    textBox.Size = UDim2.new(0, 400, 0, 50)
+    textBox.Position = UDim2.new(0.5, -200, 0.5, -25)
+    textBox.Text = "Enter Key Here"
+    textBox.TextColor3 = Color3.new(1, 1, 1)
+    textBox.BackgroundTransparency = 0.5
+    textBox.BackgroundColor3 = Color3.new(0, 0, 0)
+
+    -- Creating a button to submit the key
+    local submitButton = Instance.new("TextButton")
+    submitButton.Parent = prompt
+    submitButton.Size = UDim2.new(0, 400, 0, 50)
+    submitButton.Position = UDim2.new(0.5, -200, 0.5, 30)
+    submitButton.Text = "Submit Key"
+    submitButton.TextColor3 = Color3
