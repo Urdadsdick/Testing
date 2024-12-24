@@ -360,59 +360,44 @@ local function loadScriptFeatures()
 
     --- CREDITS TAB ---
     local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-    creditsTab:AddLabel("Developed by yooo0684 on Discord")
-    creditsTab:AddButton({
-        Name = "Join Discord",
-        Callback = function()
-            setclipboard("https://discord.gg/DvgnsUp3")
-        end
-    })
+    creditsTab:AddParagraph("Made by", "GoatedHub Developer Team")
+    creditsTab:AddParagraph("Special thanks", "Shlexware, ScriptBlox")
 
-    -- Initialize the UI
-    OrionLib:Init()
+    -- Key Checking and Execution
+    local function checkKey()
+        OrionLib:MakeNotification({
+            Name = "Enter Your Key",
+            Content = "Please enter the key to unlock the script features.",
+            Image = "rbxassetid://4483345998",
+            Time = 10
+        })
+
+        local inputBox = OrionLib:CreateInput({
+            Name = "Enter Key",
+            PlaceholderText = "Enter the key...",
+            Text = "",
+            ClearTextOnFocus = true,
+            Callback = function(input)
+                if input == keyRequired then
+                    loadScriptFeatures()
+                    OrionLib:MakeNotification({
+                        Name = "Key Accepted",
+                        Content = "Welcome to Goated Hub!",
+                        Image = "rbxassetid://4483345998",
+                        Time = 5
+                    })
+                else
+                    OrionLib:MakeNotification({
+                        Name = "Invalid Key",
+                        Content = "The key you entered is incorrect. Please try again.",
+                        Image = "rbxassetid://4483345998",
+                        Time = 5
+                    })
+                end
+            end
+        })
+    end
+    checkKey()
 end
 
--- Key system initialization
-local function keySystem()
-    -- Check if player already has the key
-    local prompt = Instance.new("ScreenGui")
-    prompt.Name = "KeyPrompt"
-    prompt.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
-    -- Creating a text box for entering the key
-    local textBox = Instance.new("TextBox")
-    textBox.Parent = prompt
-    textBox.Size = UDim2.new(0, 400, 0, 50)
-    textBox.Position = UDim2.new(0.5, -200, 0.5, -25)
-    textBox.Text = "Enter Key Here"
-    textBox.TextColor3 = Color3.new(1, 1, 1)
-    textBox.BackgroundTransparency = 0.5
-    textBox.BackgroundColor3 = Color3.new(0, 0, 0)
-
-    -- Creating a button to submit the key
-    local submitButton = Instance.new("TextButton")
-    submitButton.Parent = prompt
-    submitButton.Size = UDim2.new(0, 400, 0, 50)
-    submitButton.Position = UDim2.new(0.5, -200, 0.5, 30)
-    submitButton.Text = "Submit Key"
-    submitButton.TextColor3 = Color3.new(1, 1, 1)
-    submitButton.BackgroundTransparency = 0.5
-    submitButton.BackgroundColor3 = Color3.new(0, 0, 0)
-
-    -- Key submission event
-    submitButton.MouseButton1Click:Connect(function()
-        if textBox.Text == keyRequired then
-            prompt:Destroy()
-            loadScriptFeatures()  -- Proceed to load features if key is correct
-        else
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Key",
-                Text = "The key you entered is incorrect.",
-                Duration = 5
-            })
-        end
-    end)
-end
-
--- Execute the key system to start the script
-keySystem()
+loadScriptFeatures()
