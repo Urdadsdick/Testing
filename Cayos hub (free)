@@ -246,7 +246,117 @@ local function loadScriptFeatures()
         end
     })
 
-    -- Add other teleport buttons similarly...
+    teleportTab:AddButton({
+        Name = "Car dealer",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(796.04, 4.39, -15.37)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Shoe shop",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(55.09, 4.00, -345.23)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Father & sons",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(57.11, 4.00, -321.91)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Tattoo shop",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(56.30, 4.00, -288.71)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Pharmacy",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(56.85, 4.00, -247.30)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Ice house",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(56.09, 4.00, -225.75)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Kingz cutz",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(138.54, 4.24, 155.02)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Kebab house",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(139.82, 4.24, 118.07)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Spin wheel",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(142.29, 4.24, 85.71)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Dominoes",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(137.71, 4.24, 46.26)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Kiko",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(150.60, 4.24, -56.72)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Beauty hair salon",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(151.31, 4.24, -89.81)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Apt1",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(4.34, 4.04, 50.51)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "London drip",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(-163.27, 4.19, 33.05)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Jd",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(-141.78, 4.22, 39.92)
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Little paki",
+        Callback = function()
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(-102.01, 4.04, 50.41)
+        end
+    })
 
     --- CREDITS TAB ---
     local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
