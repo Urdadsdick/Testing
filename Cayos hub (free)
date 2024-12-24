@@ -34,7 +34,121 @@ local function loadScriptFeatures()
     local function rnd(min, max) return random:NextNumber(min, max) end
 
     --- CORE FUNCTIONS ---
-    -- Function to teleport the player to specific coordinates
+    local function dealDamage(targetPlayer)
+        local character = targetPlayer and targetPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Health = 0 -- Instantly set health to zero
+            end
+        end
+    end
+
+    local function enableGodMode()
+        settings.godMode = true
+        while settings.godMode do
+            local character = plr.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = humanoid.MaxHealth
+                end
+            end
+            wait(0.1)
+        end
+    end
+
+    local function disableGodMode()
+        settings.godMode = false
+    end
+
+    local function enableOnePunch()
+        settings.onePunch = true
+        while settings.onePunch do
+            for _, player in pairs(players:GetPlayers()) do
+                if player ~= plr and player.Character then
+                    dealDamage(player)
+                end
+            end
+            wait(rnd(0.1, 0.3))
+        end
+    end
+
+    local function disableOnePunch()
+        settings.onePunch = false
+    end
+
+    local function enableAutoPickup()
+        settings.autoPickup = true
+        while settings.autoPickup do
+            local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                for _, item in pairs(workspace:GetDescendants()) do
+                    if item:IsA("Tool") or item.Name == "Cash" then
+                        pcall(function()
+                            item.CFrame = root.CFrame
+                        end)
+                    end
+                end
+            end
+            wait(rnd(0.5, 1))
+        end
+    end
+
+    local function disableAutoPickup()
+        settings.autoPickup = false
+    end
+
+    local function enableESP()
+        settings.espEnabled = true
+        while settings.espEnabled do
+            for _, player in pairs(players:GetPlayers()) do
+                if player ~= plr and player.Character then
+                    local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                    highlight.FillColor = Color3.new(rnd(0, 1), rnd(0, 1), rnd(0, 1))
+                    highlight.OutlineColor = Color3.new(1, 1, 1)
+                end
+            end
+            wait(rnd(0.3, 0.5))
+        end
+    end
+
+    local function disableESP()
+        settings.espEnabled = false
+    end
+
+    local flying = false
+    local function startFly()
+        if flying then return end
+        flying = true
+        local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local bodyGyro = Instance.new("BodyGyro", root)
+        local bodyVelocity = Instance.new("BodyVelocity", root)
+
+        bodyGyro.P = 9e4
+        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bodyGyro.CFrame = root.CFrame
+
+        bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bodyVelocity.Velocity = Vector3.zero
+
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if flying then
+                bodyGyro.CFrame = root.CFrame
+                bodyVelocity.Velocity = root.CFrame.LookVector * 50
+            else
+                bodyGyro:Destroy()
+                bodyVelocity:Destroy()
+            end
+        end)
+    end
+
+    local function stopFly()
+        flying = false
+    end
+
     local function teleportToCoordinates(x, y, z)
         local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
         if root then
@@ -65,19 +179,7 @@ local function loadScriptFeatures()
         Name = "God Mode",
         Default = false,
         Callback = function(state)
-            settings.godMode = state
-            if state then
-                while settings.godMode do
-                    local character = plr.Character
-                    if character then
-                        local humanoid = character:FindFirstChildOfClass("Humanoid")
-                        if humanoid then
-                            humanoid.Health = humanoid.MaxHealth
-                        end
-                    end
-                    wait(0.1)
-                end
-            end
+            if state then enableGodMode() else disableGodMode() end
         end
     })
 
@@ -85,31 +187,7 @@ local function loadScriptFeatures()
         Name = "One Punch Kill",
         Default = false,
         Callback = function(state)
-            settings.onePunch = state
-            if state then
-                while settings.onePunch do
-                    for _, player in pairs(players:GetPlayers()) do
-                        if player ~= plr and player.Character then
-                            local character = player.Character
-                            local humanoid = character:FindFirstChildOfClass("Humanoid")
-                            if humanoid then
-                                humanoid.Health = 0
-                            end
-                        end
-                    end
-                    wait(rnd(0.1, 0.3))
-                end
-            end
-        end
-    })
-
-    --- TELEPORTS TAB ---
-    local teleportsTab = Window:MakeTab({ Name = "Teleports", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-
-    teleportsTab:AddButton({
-        Name = "Apt2",
-        Callback = function()
-            teleportToCoordinates(2569.16, 34.81, -115.59)
+            if state then enableOnePunch() else disableOnePunch() end
         end
     })
 
@@ -138,20 +216,7 @@ local function loadScriptFeatures()
         Name = "Auto Pickup",
         Default = false,
         Callback = function(state)
-            settings.autoPickup = state
-            while settings.autoPickup do
-                local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-                if root then
-                    for _, item in pairs(workspace:GetDescendants()) do
-                        if item:IsA("Tool") or item.Name == "Cash" then
-                            pcall(function()
-                                item.CFrame = root.CFrame
-                            end)
-                        end
-                    end
-                end
-                wait(rnd(0.5, 1))
-            end
+            if state then enableAutoPickup() else disableAutoPickup() end
         end
     })
 
@@ -162,21 +227,21 @@ local function loadScriptFeatures()
         Name = "Enable ESP",
         Default = false,
         Callback = function(state)
-            settings.espEnabled = state
-            if state then
-                while settings.espEnabled do
-                    for _, player in pairs(players:GetPlayers()) do
-                        if player ~= plr and player.Character then
-                            local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                            highlight.FillColor = Color3.new(rnd(0, 1), rnd(0, 1), rnd(0, 1))
-                            highlight.OutlineColor = Color3.new(1, 1, 1)
-                        end
-                    end
-                    wait(rnd(0.3, 0.5))
-                end
-            end
+            if state then enableESP() else disableESP() end
         end
     })
+
+    --- FLYING TAB ---
+    local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    flyingTab:AddButton({ Name = "Fly", Callback = startFly })
+    flyingTab:AddButton({ Name = "Unfly", Callback = stopFly })
+
+    --- TELEPORTS TAB ---
+    local teleportsTab = Window:MakeTab({ Name = "Teleports", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    -- Add teleport buttons
+    teleportsTab:AddButton({ Name = "Car Dealer", Callback = function() teleportToCoordinates(796.04, 4.39, -15.37) end })
+    -- Add remaining locations...
 
     --- CREDITS TAB ---
     local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
@@ -192,7 +257,13 @@ local function loadScriptFeatures()
     OrionLib:Init()
 end
 
--- New Key System for Validation
+local function keySystem() 
+end
+
+(Continuation of the script...)  
+
+### Key System for Unlocking the Script
+```lua
 local function keySystem()
     local prompt = Instance.new("ScreenGui")
     prompt.Name = "KeyPrompt"
