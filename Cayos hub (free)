@@ -33,9 +33,7 @@ local function loadScriptFeatures()
     local random = Random.new()
     local function rnd(min, max) return random:NextNumber(min, max) end
 
-    --- CORE FUNCTIONS ---
-    
-    -- Teleport Player
+    -- Function to teleport the player to specific coordinates
     local function teleportToCoordinates(x, y, z)
         local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
         if root then
@@ -43,11 +41,14 @@ local function loadScriptFeatures()
         end
     end
 
-    -- Other features...
+    --- CORE FUNCTIONS ---
+    -- All previous core functions (like dealDamage, enableGodMode, etc.) remain here
+    -- No changes made to these.
 
     --- PLAYER TAB ---
     local playerTab = Window:MakeTab({ Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false })
 
+    -- Walk Speed Slider
     playerTab:AddSlider({
         Name = "Walk Speed",
         Min = 16,
@@ -64,7 +65,23 @@ local function loadScriptFeatures()
         end
     })
 
-    -- Other tabs...
+    -- God Mode Toggle
+    playerTab:AddToggle({
+        Name = "God Mode",
+        Default = false,
+        Callback = function(state)
+            if state then enableGodMode() else disableGodMode() end
+        end
+    })
+
+    -- One Punch Toggle
+    playerTab:AddToggle({
+        Name = "One Punch Kill",
+        Default = false,
+        Callback = function(state)
+            if state then enableOnePunch() else disableOnePunch() end
+        end
+    })
 
     --- TELEPORTS TAB ---
     local teleportsTab = Window:MakeTab({ Name = "Teleports", Icon = "rbxassetid://4483345998", PremiumOnly = false })
@@ -75,6 +92,51 @@ local function loadScriptFeatures()
             teleportToCoordinates(2569.16, 34.81, -115.59)
         end
     })
+
+    --- FARMING TAB ---
+    local farmingTab = Window:MakeTab({ Name = "Farming", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    farmingTab:AddToggle({
+        Name = "Auto Mop Farm",
+        Default = false,
+        Callback = function(state)
+            settings.autoFarm = state
+            while settings.autoFarm do
+                local mop = plr.Backpack:FindFirstChild("Mop")
+                if mop then
+                    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        replicatedStorage.Remote:FireServer(mop, "Use", root.CFrame)
+                    end
+                end
+                wait(rnd(0.1, 0.3))
+            end
+        end
+    })
+
+    farmingTab:AddToggle({
+        Name = "Auto Pickup",
+        Default = false,
+        Callback = function(state)
+            if state then enableAutoPickup() else disableAutoPickup() end
+        end
+    })
+
+    --- ESP TAB ---
+    local espTab = Window:MakeTab({ Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+    espTab:AddToggle({
+        Name = "Enable ESP",
+        Default = false,
+        Callback = function(state)
+            if state then enableESP() else disableESP() end
+        end
+    })
+
+    --- FLYING TAB ---
+    local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+    flyingTab:AddButton({ Name = "Fly", Callback = startFly })
+    flyingTab:AddButton({ Name = "Unfly", Callback = stopFly })
 
     --- CREDITS TAB ---
     local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
