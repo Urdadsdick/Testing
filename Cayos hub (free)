@@ -12,7 +12,7 @@ local function loadScriptFeatures()
         SaveConfig = true,
         ConfigFolder = "GoatedHub"
     })
-    
+
     -- Player Settings
     local players = game:GetService("Players")
     local plr = players.LocalPlayer
@@ -33,6 +33,7 @@ local function loadScriptFeatures()
     local random = Random.new()
     local function rnd(min, max) return random:NextNumber(min, max) end
 
+    --- CORE FUNCTIONS ---
     -- Function to teleport the player to specific coordinates
     local function teleportToCoordinates(x, y, z)
         local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
@@ -41,14 +42,9 @@ local function loadScriptFeatures()
         end
     end
 
-    --- CORE FUNCTIONS ---
-    -- All existing core functions (like dealDamage, enableGodMode, etc.) remain here.
-    -- No changes made to these.
-
     --- PLAYER TAB ---
     local playerTab = Window:MakeTab({ Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false })
 
-    -- Walk Speed Slider
     playerTab:AddSlider({
         Name = "Walk Speed",
         Min = 16,
@@ -65,21 +61,45 @@ local function loadScriptFeatures()
         end
     })
 
-    -- God Mode Toggle
     playerTab:AddToggle({
         Name = "God Mode",
         Default = false,
         Callback = function(state)
-            if state then enableGodMode() else disableGodMode() end
+            settings.godMode = state
+            if state then
+                while settings.godMode do
+                    local character = plr.Character
+                    if character then
+                        local humanoid = character:FindFirstChildOfClass("Humanoid")
+                        if humanoid then
+                            humanoid.Health = humanoid.MaxHealth
+                        end
+                    end
+                    wait(0.1)
+                end
+            end
         end
     })
 
-    -- One Punch Toggle
     playerTab:AddToggle({
         Name = "One Punch Kill",
         Default = false,
         Callback = function(state)
-            if state then enableOnePunch() else disableOnePunch() end
+            settings.onePunch = state
+            if state then
+                while settings.onePunch do
+                    for _, player in pairs(players:GetPlayers()) do
+                        if player ~= plr and player.Character then
+                            local character = player.Character
+                            local humanoid = character:FindFirstChildOfClass("Humanoid")
+                            if humanoid then
+                                humanoid.Health = 0
+                            end
+                        end
+                    end
+                    wait(rnd(0.1, 0.3))
+                end
+            end
         end
     })
 
@@ -118,7 +138,20 @@ local function loadScriptFeatures()
         Name = "Auto Pickup",
         Default = false,
         Callback = function(state)
-            if state then enableAutoPickup() else disableAutoPickup() end
+            settings.autoPickup = state
+            while settings.autoPickup do
+                local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    for _, item in pairs(workspace:GetDescendants()) do
+                        if item:IsA("Tool") or item.Name == "Cash" then
+                            pcall(function()
+                                item.CFrame = root.CFrame
+                            end)
+                        end
+                    end
+                end
+                wait(rnd(0.5, 1))
+            end
         end
     })
 
@@ -129,14 +162,21 @@ local function loadScriptFeatures()
         Name = "Enable ESP",
         Default = false,
         Callback = function(state)
-            if state then enableESP() else disableESP() end
+            settings.espEnabled = state
+            if state then
+                while settings.espEnabled do
+                    for _, player in pairs(players:GetPlayers()) do
+                        if player ~= plr and player.Character then
+                            local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
+                            highlight.FillColor = Color3.new(rnd(0, 1), rnd(0, 1), rnd(0, 1))
+                            highlight.OutlineColor = Color3.new(1, 1, 1)
+                        end
+                    end
+                    wait(rnd(0.3, 0.5))
+                end
+            end
         end
     })
-
-    --- FLYING TAB ---
-    local flyingTab = Window:MakeTab({ Name = "Flying", Icon = "rbxassetid://4483345998", PremiumOnly = false })
-    flyingTab:AddButton({ Name = "Fly", Callback = startFly })
-    flyingTab:AddButton({ Name = "Unfly", Callback = stopFly })
 
     --- CREDITS TAB ---
     local creditsTab = Window:MakeTab({ Name = "Credits", Icon = "rbxassetid://4483345998", PremiumOnly = false })
@@ -154,12 +194,10 @@ end
 
 -- New Key System for Validation
 local function keySystem()
-    -- Create a simple key prompt
     local prompt = Instance.new("ScreenGui")
     prompt.Name = "KeyPrompt"
     prompt.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-    -- Creating a text box for entering the key
     local textBox = Instance.new("TextBox")
     textBox.Parent = prompt
     textBox.Size = UDim2.new(0, 400, 0, 50)
@@ -169,7 +207,6 @@ local function keySystem()
     textBox.BackgroundTransparency = 0.5
     textBox.BackgroundColor3 = Color3.new(0, 0, 0)
 
-    -- Creating a button to submit the key
     local submitButton = Instance.new("TextButton")
     submitButton.Parent = prompt
     submitButton.Size = UDim2.new(0, 400, 0, 50)
@@ -179,11 +216,10 @@ local function keySystem()
     submitButton.BackgroundTransparency = 0.5
     submitButton.BackgroundColor3 = Color3.new(0, 0, 0)
 
-    -- Key submission event
     submitButton.MouseButton1Click:Connect(function()
         if textBox.Text == keyRequired then
             prompt:Destroy()
-            loadScriptFeatures()  -- Proceed to load features if key is correct
+            loadScriptFeatures()
         else
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid Key",
