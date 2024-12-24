@@ -42,7 +42,7 @@ local function loadScriptFeatures()
     end
 
     --- CORE FUNCTIONS ---
-    -- All previous core functions (like dealDamage, enableGodMode, etc.) remain here
+    -- All existing core functions (like dealDamage, enableGodMode, etc.) remain here.
     -- No changes made to these.
 
     --- PLAYER TAB ---
