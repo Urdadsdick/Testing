@@ -1,80 +1,37 @@
 -- Key System Variables
-local requiredKey = "GoatedHub123" -- The key required to access the script
+local requiredKey = "key" -- The key required to access the script
 local discordLink = "https://discord.gg/ADQUB6W7" -- Key retrieval link
 
 -- Load Orion Library
 local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-local Window = OrionLib:MakeWindow({Name = "Goated Hub - Key System", HidePremium = false, SaveConfig = true, ConfigFolder = "GoatedHub"})
+local Window
 
 -- Player Settings
 local players = game:GetService("Players")
 local plr = players.LocalPlayer
-local workspace = game:GetService("Workspace")
-local replicatedStorage = game:GetService("ReplicatedStorage")
 local settings = {
     walkSpeed = 16,
     godMode = false,
-    onePunch = false,
-    autoPickup = false,
-    autoFarm = false,
     espEnabled = false
 }
 
--- Utility Functions
+-- Teleport Function
 local function teleportToCoordinates(x, y, z)
     if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
         plr.Character.HumanoidRootPart.CFrame = CFrame.new(x, y, z)
     end
 end
 
-local function toggleWalkSpeed(value)
-    local character = plr.Character
-    if character then
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = value
-        end
-    end
-end
+-- Function to Load Features
+local function loadFeatures()
+    -- Create the main UI Window
+    Window = OrionLib:MakeWindow({
+        Name = "Goated Hub",
+        HidePremium = false,
+        SaveConfig = true,
+        ConfigFolder = "GoatedHub"
+    })
 
-local function enableGodMode()
-    settings.godMode = true
-    while settings.godMode do
-        local character = plr.Character
-        if character then
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.Health = humanoid.MaxHealth -- Restore health
-            end
-        end
-        wait(0.1)
-    end
-end
-
-local function disableGodMode()
-    settings.godMode = false
-end
-
-local function enableESP()
-    settings.espEnabled = true
-    while settings.espEnabled do
-        for _, player in pairs(players:GetPlayers()) do
-            if player ~= plr and player.Character then
-                local highlight = player.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight", player.Character)
-                highlight.FillColor = Color3.new(1, 0, 0)
-                highlight.OutlineColor = Color3.new(1, 1, 1)
-            end
-        end
-        wait(0.3)
-    end
-end
-
-local function disableESP()
-    settings.espEnabled = false
-end
-
--- Load Features After Key Verification
-function loadFeatures()
     --- Player Tab ---
     local playerTab = Window:MakeTab({Name = "Player", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 
@@ -86,7 +43,9 @@ function loadFeatures()
         Increment = 1,
         Callback = function(value)
             settings.walkSpeed = value
-            toggleWalkSpeed(value)
+            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+                plr.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = value
+            end
         end
     })
 
@@ -94,7 +53,13 @@ function loadFeatures()
         Name = "God Mode",
         Default = false,
         Callback = function(state)
-            if state then enableGodMode() else disableGodMode() end
+            settings.godMode = state
+            while settings.godMode do
+                if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+                    plr.Character:FindFirstChildOfClass("Humanoid").Health = plr.Character:FindFirstChildOfClass("Humanoid").MaxHealth
+                end
+                wait(0.1)
+            end
         end
     })
 
@@ -102,13 +67,19 @@ function loadFeatures()
         Name = "Enable ESP",
         Default = false,
         Callback = function(state)
-            if state then enableESP() else disableESP() end
+            settings.espEnabled = state
+            while settings.espEnabled do
+                for _, player in ipairs(players:GetPlayers()) do
+                    if player ~= plr and player.Character and not player.Character:FindFirstChildOfClass("Highlight") then
+                        local highlight = Instance.new("Highlight", player.Character)
+                        highlight.FillColor = Color3.new(1, 0, 0)
+                        highlight.OutlineColor = Color3.new(1, 1, 1)
+                    end
+                end
+                wait(0.5)
+            end
         end
     })
-
-    --- Farming Tab ---
-    local farmingTab = Window:MakeTab({Name = "Farming", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-    farmingTab:AddLabel("Farming features coming soon!")
 
     --- Teleports Tab ---
     local teleportsTab = Window:MakeTab({Name = "Teleports", Icon = "rbxassetid://4483345998", PremiumOnly = false})
@@ -132,7 +103,7 @@ function loadFeatures()
         {name = "Little Paki", coords = {-102.01, 4.04, 50.41}}
     }
 
-    for _, location in pairs(locations) do
+    for _, location in ipairs(locations) do
         teleportsTab:AddButton({
             Name = location.name,
             Callback = function()
@@ -157,13 +128,6 @@ end
 
 -- Key System
 local function keySystem()
-    OrionLib:MakeNotification({
-        Name = "Key System",
-        Content = "Enter the correct key to unlock the script.",
-        Image = "rbxassetid://4483345998",
-        Time = 10
-    })
-
     OrionLib:MakeWindow({
         Name = "Enter Key",
         HidePremium = false,
@@ -197,5 +161,5 @@ local function keySystem()
     })
 end
 
--- Start the key system
+-- Start the Key System
 keySystem()
