@@ -337,17 +337,18 @@ local function loadScriptFeatures()
             stopFly()
         end
     })
-    
 end
 
 -- Ensure the user is prompted for the key
 local function checkKey()
-    -- Get key input
-    local keyInput = game:GetService("UserInputService"):InputBegan:Connect(function(input)
+    -- Wait until the key is entered to load the script
+    local function onKeyEntered(input)
         if input.KeyCode == Enum.KeyCode[keyRequired] then
             loadScriptFeatures()  -- Load the script once the key is entered
         end
-    end)
+    end
+
+    game:GetService("UserInputService").InputBegan:Connect(onKeyEntered)
 end
 
 checkKey()
